@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>GPedal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="/css/odometer.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:900" rel="stylesheet">
+    <style>
+      #street-view, #map-view, #app-container {
+        height: 100%;
+      }
+      #ui-left-container {
+        position: absolute;
+        top: 0.3vw;
+        left: 0.3vw;
+        height: 10.7vw;
+        width: 18vw;
+        z-index: 150;
+        padding: 0;
+        font-family: 'Lato',sans-serif;
+        line-height: initial;
+      }
+      #ui-left {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: #31A3CC;
+        border-top-right-radius: 2vw;
+        border-bottom-left-radius: 2vw;
+        border-top-left-radius: 0.3vw;
+        border-bottom-right-radius: 0.3vw;
+      }
+
+      #watts-unit {
+        float: right;
+        font-size: 2.5vw;
+        padding-right: 0.7vw;
+        padding-left: 0.35vw;
+        margin-top: 1.9vw;
+        color: #fff;
+        line-height: 2vw;
+        text-align:center;
+      }
+      #watts-unit i {
+        font-size: 1.9vw;
+      }
+      #watts {
+        padding-top: 0.5vw;
+        padding-left: 0;
+        text-align: right;
+        color: #fff;
+        font-size: 6.3vw;
+        line-height: 6.1vw;
+      }
+
+      #heart-unit {
+        float: right;
+        font-size: 1.2vw;
+        padding-right: 0.7vw;
+        padding-left: 0.3vw;
+        margin-top: 1.2vw;
+        color: #000;
+        line-height: 0.7vw;
+        text-align: center;
+      }
+      #heart-unit i {
+        font-size: 1vw;
+      }
+      #heart {
+        padding-left: 0;
+        padding-bottom: 0.6vw;
+        padding-top: 0.4vw;
+        text-align: right;
+        color: #000;
+        font-size: 2.6vw;
+      }
+
+      #cadence-container {
+        position: absolute;
+        top: 6.5vw;
+        left: 0;
+        width: 9vw;
+      }
+
+      #cadence-unit {
+        float: right;
+        font-size: 1.2vw;
+        padding-right: 0.7vw;
+        padding-left: 0.3vw;
+        margin-top: 1.2vw;
+        color: #000;
+        line-height: 0.7vw;
+        text-align:center;
+      }
+      #cadence-unit i {
+        font-size: 1vw;
+      }
+      #cadence {
+        padding-left: 0;
+        padding-bottom: 0.6vw;
+        padding-top: 0.4vw;
+        text-align: right;
+        color: #000;
+        font-size: 2.6vw;
+      }
+
+      #ui-center-container {
+        position: absolute;
+        top: 0.3vw;
+        left: 0;
+        right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        height: 5vw;
+        width: 48.75vw;
+        z-index: 150;
+        padding: 0;
+        font-family: 'Lato',sans-serif;
+        line-height: initial;
+      }
+
+      #ui-center {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: #fff;
+        border-top-right-radius: 1vw;
+        border-bottom-left-radius: 1vw;
+        border-top-left-radius: 0.3vw;
+        border-bottom-right-radius: 0.3vw;
+      }
+
+      #speed-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 10.5vw;
+      }
+
+      #speed-unit {
+        float: right;
+        font-size: 1.3vw;
+        padding-right: 0.7vw;
+        padding-left: 0.1vw;
+        margin-top: 2vw;
+        color: #31A3CC;
+        line-height: 0.6vw;
+        text-align:center;
+      }
+
+      #speed-unit i {
+        font-size: 1.2vw;
+      }
+      #speed {
+        padding-left: 0;
+        padding-bottom: 0.5vw;
+        padding-top: 0.11vw;
+        text-align: right;
+        color: #31A3CC;
+        font-size: 4vw;
+      }
+
+      #distance-container {
+        position: absolute;
+        top: 0;
+        left: 10.5vw;
+        width: 10.75vw;
+      }
+
+      #distance-unit {
+        float: right;
+        font-size: 1.3vw;
+        padding-right: 0.7vw;
+        padding-left: 0.1vw;
+        margin-top: 1.55vw;
+        color: #000;
+        line-height: 1.3vw;
+        text-align:center;
+      }
+
+      #distance-unit i {
+        font-size: 1.1vw;
+      }
+
+      #distance {
+        padding-left: 0;
+        padding-bottom: 0.5vw;
+        padding-top: 0.11vw;
+        text-align: right;
+        color: #000;
+        font-size: 4vw;
+      }
+
+      #climb-container {
+        position: absolute;
+        top: 0;
+        left: 21.25vw;
+        width: 11.75vw;
+      }
+
+      #climb-unit {
+        float: right;
+        font-size: 1.3vw;
+        padding-right: 0.7vw;
+        padding-left: 0.1vw;
+        margin-top: 1.7vw;
+        color: #31A3CC;
+        line-height: 1.2vw;
+        text-align:center;
+      }
+
+      #climb-unit i {
+        font-size: 1.2vw;
+      }
+
+      #climb {
+        padding-left: 0;
+        padding-bottom: 0.5vw;
+        padding-top: 0.11vw;
+        text-align: right;
+        color: #31A3CC;
+        font-size: 4vw;
+      }
+
+      #time-container {
+        position: absolute;
+        top: 0;
+        left: 33vw;
+        width: 15.9vw;
+      }
+
+      #time-unit {
+        float: right;
+        font-size: 1.3vw;
+        padding-right: 0.7vw;
+        padding-left: 0.1vw;
+        margin-top: 2.1vw;
+        color: #000;
+        line-height: 0.7vw;
+        text-align:center;
+      }
+
+      #time-unit i {
+        font-size: 1.2vw;
+      }
+
+      #time {
+        padding-left: 0;
+        padding-bottom: 0.5vw;
+        padding-top: 0.11vw;
+        text-align: right;
+        color: #000;
+        font-size: 4vw;
+      }
+
+      #tracker-container {
+        position: absolute;
+        top: 0.3vw;
+        right: 0.3vw;
+        height: 12vw;
+        width: 22vw;
+        z-index: 150;
+        padding: 0;
+        color: #fff;
+      }
+
+      #tracker {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #ui-grade-container {
+        position: absolute;
+        top: 13vw;
+        right: 0.3vw;
+        height: 5vw;
+        width: 11.4vw;
+        z-index: 150;
+        padding: 0;
+        font-family: 'Lato',sans-serif;
+        line-height: initial;
+      }
+
+      #ui-grade {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: #31A3CC;
+        border-top-right-radius: 1vw;
+        border-bottom-left-radius: 1vw;
+        border-top-left-radius: 0.3vw;
+        border-bottom-right-radius: 0.3vw;
+      }
+
+      #grade-unit {
+        float: right;
+        font-size: 1.3vw;
+        padding-right: 0.7vw;
+        padding-left: 0.1vw;
+        margin-top: 1.5vw;
+        color: #fff;
+        line-height: 1.4vw;
+        text-align:center;
+      }
+
+      #grade-unit i {
+        font-size: 1.2vw;
+      }
+      #grade {
+        padding-left: 0;
+        padding-bottom: 0.5vw;
+        padding-top: 0.11vw;
+        text-align: right;
+        color: #fff;
+        font-size: 4vw;
+      }
+
+      #ui-vpower-container {
+        position: absolute;
+        top: 11.3vw;
+        left: 0.3vw;
+        height: 5vw;
+        width: 14vw;
+        z-index: 150;
+        padding: 0;
+        font-family: 'Lato',sans-serif;
+        line-height: initial;
+        color: #000;
+      }
+
+      #ui-vpower {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: #fff;
+        border-top-right-radius: 1vw;
+        border-bottom-left-radius: 1vw;
+        border-top-left-radius: 0.3vw;
+        border-bottom-right-radius: 0.3vw;
+        padding: 1vw;
+        padding-top: 1.1vw;
+      }
+
+      #ui-vpower-label {
+        font-size: 1vw;
+        text-align: center;
+      }
+
+      #vpower {
+        width: 100%
+      }
+
+      #ui-finalize-container {
+        position: absolute;
+        top: 11.3vw;
+        left: 30vw;
+        height: 12vw;
+        width: 28vw;
+        z-index: 150;
+        padding: 0;
+        font-family: 'Lato',sans-serif;
+        line-height: initial;
+        color: #000;
+      }
+
+      #ui-finalize {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: #fff;
+        border-top-right-radius: 1vw;
+        border-bottom-left-radius: 1vw;
+        border-top-left-radius: 0.3vw;
+        border-bottom-right-radius: 0.3vw;
+        padding: 1vw;
+        padding-top: 1.5vw;
+      }
+
+      #ui-finalize-label {
+        font-size: 2vw;
+        text-align: center;
+      }
+
+      #ui-finalize-actions {
+        margin-top: 0.4vw;
+        text-align: center;
+      }
+
+      #input-ride-name {
+        margin-bottom: 0.4vw;
+        text-align: center;
+      }
+
+      #btn-export-strava {
+        background-color: #fa632e;
+        border-color: #e0430b;
+        font-size: 1.5vw;
+      }
+
+      #street-view, #map-view {
+        z-index: 90;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="app-container" style="display: none">
+        <div id="ui-left-container">
+            <div id="ui-left">
+                <div id="watts-unit">
+                    <i class="fa fa-bolt" aria-hidden="true"></i><br/>
+                    w
+                </div>
+                <div id="watts">0</div>
+
+                <div id="heart-unit">
+                    <i class="fa fa-heartbeat" aria-hidden="true"></i><br/>
+                    bpm
+                </div>
+                <div id="heart">--</div>
+
+                <div id="cadence-container">
+                    <div id="cadence-unit">
+                        <i class="fa fa-circle-o-notch" aria-hidden="true"></i><br/>
+                        rpm
+                    </div>
+                    <div id="cadence">--</div>
+                </div>
+            </div>
+        </div>
+        <div id="ui-center-container">
+            <div id="ui-center">
+                <div id="speed-container">
+                    <div id="speed-unit">
+                        <i class="fa fa-tachometer" aria-hidden="true"></i><br/>
+                        mph
+                    </div>
+                    <div id="speed">0</div>
+                </div>
+                <div id="distance-container">
+                    <div id="distance-unit">
+                        <i class="icon-odometer"></i>
+                        <br/>
+                        mi
+                    </div>
+                    <div id="distance">0</div>
+                </div>
+                <div id="climb-container">
+                    <div id="climb-unit">
+                        <i class="fa fa-area-chart" aria-hidden="true"></i><br/>
+                        ft
+                    </div>
+                    <div id="climb">0</div>
+                </div>
+                <div id="time-container">
+                    <div id="time-unit">
+                        <i class="fa fa-clock-o" aria-hidden="true"></i><br/>
+                        et
+                    </div>
+                    <div id="time">00:00</div>
+                </div>
+            </div>
+        </div>
+        <div id="tracker-container">
+            <div id="tracker"></div>
+        </div>
+        <div id="ui-grade-container">
+            <div id="ui-grade">
+                <div id="grade-unit">
+                    <i id="grade-unit-icon" class="fa fa-long-arrow-up" aria-hidden="true"></i><br/>
+                    %
+                </div>
+                <div id="grade">0</div>
+            </div>
+        </div>
+        <div id="ui-vpower-container" style="display: none">
+            <div id="ui-vpower">
+                <div id="ui-vpower-label">
+                    Virtual Power
+                </div>
+                <input id="vpower" type="range" min="0" max="900" step="any">
+            </div>
+        </div>
+        <div id="ui-finalize-container" style="display: none">
+            <div id="ui-finalize">
+                <div id="ui-finalize-label">
+                    Ride Finished
+                </div>
+                <div id="ui-finalize-actions">
+                    <input id="input-ride-name" class="form-control" type="text" style="display: none" placeholder="Name Ride">
+                    <a href="#" id="btn-export-strava" class="btn btn-secondary active" role="button" aria-pressed="true" style="display: none">Export to Strava</a>
+                </div>
+            </div>
+        </div>
+        <div id="street-view"></div>
+        <div id="map-view" style="display: none"></div>
+    </div>
+    <div id="configure-container" class="container">
+        <h1>GPedal</h1>
+
+        <div class="container">
+            <div class="row">
+                <div class="col-6">
+                    <div class="alert alert-danger" role="alert" id="messages" style="display: none;">
+
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <form>
+                        <div class="form-row">
+                            <div class="form-group col-md-9">
+                              <label for="gpx-file-upload">GPX Route</label>
+                              <input type="file" class="form-control-file" accept=".gpx" id="gpx-file-upload">
+                              <p class="small" style="margin: 0">
+                                  GPX Route files can be created for free with <a href="https://www.komoot.com/" target="_blank">Komoot</a> or <a href="https://ridewithgps.com/" target="_blank">Ride with GPS</a>.  A sample gpx route can be downloaded <a href="/routes/washington_dc.gpx">here</a>.
+                              </p>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="rider-weight" class="col-form-label">Rider Weight</label>
+                                <input type="text" class="form-control" id="rider-weight" placeholder="190">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-9">
+                                <label for="btn-bluetooth-device" class="col-form-label">Bluetooth Devices</label>
+                                  <br/>
+                                  <a id="btn-bluetooth-device" class="btn btn-primary" style="display: none" href="#" role="button">
+                                    <i class="fa fa-bluetooth" aria-hidden="true"></i>
+                                    <span id="btn-bluetooth-device-txt">Connect</span>
+                                  </a>
+                                  <p id="btn-bluetooth-device-warning" class="small" style="display: none">
+                                      Web Bluetooth API not supported in this browser.  Please use Chrome on Mac OS or Linux.  On Windows
+                                      use Chrome with the <a href="https://github.com/urish/web-bluetooth-polyfill" target="_blank">Windows 10 Web Bluetooth Polyfill</a> installed.
+                                  </p>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="power-meter" class="col-form-label">Power Meter</label><br/>
+                                <select class="custom-select" id="power-meter">
+                                  <option value="virtual" selected>Virtual Power Meter</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="hr-meter" class="col-form-label">Heart Rate Monitor</label><br/>
+                                <select class="custom-select" id="hr-meter">
+                                  <option value="" selected>Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="cadence-meter" class="col-form-label">Cadence Meter</label><br/>
+                                <select class="custom-select" id="cadence-meter">
+                                  <option value="" selected>Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-9">
+                                <label class="col-form-label">Connections</label>
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <img src="/images/strava.png" id="strava-connection" style="width: 100%; margin-top: 5px"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <a href="#" id="strava-btn-connect" class="btn btn-secondary active" role="button" aria-pressed="true">Connect</a>
+                                            <a href="#" id="strava-btn-connected" class="btn btn-success disabled" style="display: none" role="button" aria-pressed="true">Connected</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" id="begin-session" class="btn btn-primary">Begin</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer mt-3">
+          <div class="container">
+            <span class="small text-muted">GPedal is open source and hosted on <a href="https://github.com/chadj/gpedal">Github</a>.  Contributions are welcome.  <a href="https://github.com/chadj/gpedal">https://github.com/chadj/gpedal</a> </span>
+          </div>
+        </footer>
+
+    </div>
+
+    <script id="strava-gpx-template" type="x-tmpl-mustache">
+    <?xml version="1.0" encoding="UTF-8"?>
+    <gpx creator="GPedalGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3">
+     <metadata>
+      <time>{{ export_time }}</time>
+     </metadata>
+     <trk>
+      <name>{{ export_name }}</name>
+      <trkseg>
+       {{#points}}
+       <trkpt lat="{{ lat }}" lon="{{ lng }}">
+        <ele>{{ elevation }}</ele>
+        <time>{{ time }}</time>
+        <extensions>
+         <power>{{ power }}</power>
+         <gpxtpx:TrackPointExtension>
+          {{#hr}}
+          <gpxtpx:hr>{{ hr }}</gpxtpx:hr>
+          {{/hr}}
+          {{#cad}}
+          <gpxtpx:cad>{{ cad }}</gpxtpx:cad>
+          {{/cad}}
+         </gpxtpx:TrackPointExtension>
+        </extensions>
+       </trkpt>
+       {{/points}}
+      </trkseg>
+     </trk>
+    </gpx>
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8CBYhq7f2aibteBvLz2jvRZAHu346qJM&libraries=geometry"></script>
+    <script src="bundle.js"></script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "gpedal",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node_modules/.bin/webpack-dev-server",
+    "build": "webpack --config webpack.production.config.js"
+  },
+  "keywords": [],
+  "author": "GPedal Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "babili-webpack-plugin": "^0.1.2",
+    "webpack": "^3.5.5",
+    "webpack-dev-server": "^2.7.1"
+  },
+  "dependencies": {
+    "blueimp-md5": "^2.8.0",
+    "mustache": "^2.3.0",
+    "url-search-params": "^0.10.0"
+  }
+}
