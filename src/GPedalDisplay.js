@@ -238,11 +238,7 @@ export class GPedalDisplay {
 
           //map.setCenter(this.ridingState.location);
           this.miniMap.panTo(this.ridingState.location);
-          if(this.ridingState.mapMode === 'MV') {
-            streetview.setPano(data.location.pano);
-          } else {
-            streetview.setPosition(data.location.latLng);
-          }
+          streetview.setPano(data.location.pano);
           //streetview.setPov({heading: this.ridingState.point.heading, pitch: 0});
           this.ridingState.mapMode = 'SV';
         } catch (error) {
