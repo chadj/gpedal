@@ -359,6 +359,41 @@
         width: 100%
       }
 
+      #ui-menuopen-container {
+        position: absolute;
+        bottom: 0.2vw;
+        left: 0.2vw;
+        height: 6vw;
+        width: 6vw;
+        z-index: 150;
+        padding: 0;
+        font-family: 'Lato',sans-serif;
+        line-height: initial;
+      }
+
+      #ui-menuopen {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: #31A3CC;
+        border-top-right-radius: 1vw;
+        border-bottom-left-radius: 1vw;
+        border-top-left-radius: 0.3vw;
+        border-bottom-right-radius: 0.3vw;
+      }
+
+      #menuopen {
+        padding-left: 1.1vw;
+        padding-top: 0.1vw;
+        color: #fff;
+        font-size: 4.5vw;
+      }
+
+      #menuopen-btn {
+        color: #fff;
+      }
+
       #ui-finalize-container {
         position: absolute;
         top: 11.3vw;
@@ -500,6 +535,13 @@
                     Virtual Power
                 </div>
                 <input id="vpower" type="range" min="0" max="900" step="any">
+            </div>
+        </div>
+        <div id="ui-menuopen-container">
+            <div id="ui-menuopen">
+                <div id="menuopen">
+                    <a href="#" id="menuopen-btn"><i class="fa fa-bars" aria-hidden="true"></i></a>
+                </div>
             </div>
         </div>
         <div id="ui-finalize-container" style="display: none">

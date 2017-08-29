@@ -451,8 +451,9 @@ export class GPedalDisplay {
 
   }
 
-  showFinalizeUI() {
+  showFinalizeUI(msg) {
     document.getElementById('ui-finalize-container').style.display = 'block';
+    document.getElementById('ui-finalize-label').innerHTML = msg;
     if(localStorage.getItem('strava-oauth-code')) {
       let now = new Date();
       let ride_name = "GPedal - ";

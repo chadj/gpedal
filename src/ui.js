@@ -44,6 +44,8 @@ export function registerUI() {
 
   let cadenceMeters = []
 
+  let mapDisplay;
+
   let $gpx = document.getElementById('gpx-file-upload');
   let $btn = document.getElementById('begin-session');
   let $btntxt = document.getElementById('btn-bluetooth-device-txt');
@@ -52,6 +54,19 @@ export function registerUI() {
   let $pm = document.getElementById('power-meter');
   let $hm = document.getElementById('hr-meter');
   let $cm = document.getElementById('cadence-meter');
+  let $mob = document.getElementById('menuopen-btn');
+
+  /**
+  Menu open Handler
+  */
+  $mob.onclick = (e) => {
+    e.preventDefault();
+    if(document.getElementById('ui-finalize-container').style.display === 'none') {
+      mapDisplay.showFinalizeUI("Complete Ride");
+    } else {
+      document.getElementById('ui-finalize-container').style.display = 'none';
+    }
+  };
 
   /**
   Strava Connect Handler
@@ -242,12 +257,12 @@ export function registerUI() {
         }
 
         GPedalDisplay.transitionUI();
-        let mapDisplay = new GPedalDisplay(points, weight, powerMeter, heartMeter, cadenceMeter);
+        mapDisplay = new GPedalDisplay(points, weight, powerMeter, heartMeter, cadenceMeter);
         await mapDisplay.geocodeRoute();
 
         mapDisplay.updateUI();
         await mapDisplay.updatePosition();
-        mapDisplay.showFinalizeUI();
+        mapDisplay.showFinalizeUI("Ride Finished");
       })()
       .catch(error => {
         console.log("Error: ", error);
