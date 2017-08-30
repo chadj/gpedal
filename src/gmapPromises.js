@@ -18,8 +18,7 @@ export function getPanoramaByLocation(location, radius) {
   return new Promise(function(resolve,reject) {
     let request = {
       location: location,
-      radius: radius,
-      source: google.maps.StreetViewSource.OUTDOOR
+      radius: radius
     };
     streetViewService.getPanorama(request, (results, status) => {
       if (status == google.maps.StreetViewStatus.OK) {

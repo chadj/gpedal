@@ -227,20 +227,25 @@ export class GPedalDisplay {
         try {
           let data = await getPanoramaByLocation(this.ridingState.location, 50);
 
-          if(this.ridingState.mapMode === 'MV') {
-            document.getElementById('map-view').style.display = 'none';
-            document.getElementById('tracker').style.display = 'block';
-            document.getElementById('street-view').style.display = 'block';
-            streetview.setVisible(true);
-            google.maps.event.trigger(streetview, 'resize');
-            google.maps.event.trigger(this.miniMap, 'resize');
-          }
+          // Is this a user submitted panorama?  If so, don't display it.
+          if(!('profileUrl' in data.location)) {
+            if(this.ridingState.mapMode === 'MV') {
+              document.getElementById('map-view').style.display = 'none';
+              document.getElementById('tracker').style.display = 'block';
+              document.getElementById('street-view').style.display = 'block';
+              streetview.setVisible(true);
+              google.maps.event.trigger(streetview, 'resize');
+              google.maps.event.trigger(this.miniMap, 'resize');
+            }
 
-          //map.setCenter(this.ridingState.location);
-          this.miniMap.panTo(this.ridingState.location);
-          streetview.setPano(data.location.pano);
-          //streetview.setPov({heading: this.ridingState.point.heading, pitch: 0});
-          this.ridingState.mapMode = 'SV';
+            this.miniMap.panTo(this.ridingState.location);
+            if(this.ridingState.mapMode === 'MV') {
+              streetview.setPano(data.location.pano);
+            } else {
+              streetview.setPosition(this.ridingState.location);
+            }
+            this.ridingState.mapMode = 'SV';
+          }
         } catch (error) {
           // streetview not available
           if(this.ridingState.mapMode === 'SV') {
