@@ -221,7 +221,7 @@ export class GPedalDisplay {
     }
 
     let [min, max] = d3.extent(data, d => d[1]);
-    if((max - min) < 75) max = min + 75;
+    if((max - min) < 50) max = min + 50;
 
     const zoomScaleY = d3.scaleLinear()
       .domain([max,min])
