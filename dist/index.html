@@ -279,43 +279,51 @@
         overflow: hidden;
       }
 
-      #ui-grade-container {
+      #ui-elevation-container {
         position: absolute;
         top: 13vw;
         right: 0.3vw;
-        height: 5vw;
-        width: 11.4vw;
+        height: 7.5vw;
+        width: 15vw;
         z-index: 150;
         padding: 0;
         font-family: 'Lato',sans-serif;
+        color: #fff;
         line-height: initial;
       }
 
-      #ui-grade {
+      #ui-elevation {
         height: 100%;
         width: 100%;
         position: relative;
         overflow: hidden;
-        background-color: #31A3CC;
-        border-top-right-radius: 1vw;
-        border-bottom-left-radius: 1vw;
-        border-top-left-radius: 0.3vw;
-        border-bottom-right-radius: 0.3vw;
+      }
+
+      #ui-elevation-svg {
+        height: 100%;
+        width: 100%;
+      }
+
+      #ui-elevation-grade {
+        position: absolute;
+        top: 4.55vw;
+        left: 1.3vw;
+        width: 10vw;
       }
 
       #grade-unit {
         float: right;
-        font-size: 1.3vw;
+        font-size: 1vw;
         padding-right: 0.7vw;
         padding-left: 0.1vw;
-        margin-top: 1.5vw;
+        margin-top: 0.64vw;
         color: #fff;
-        line-height: 1.4vw;
+        line-height: 1.2vw;
         text-align:center;
       }
 
       #grade-unit i {
-        font-size: 1.2vw;
+        font-size: 0.9vw;
       }
       #grade {
         padding-left: 0;
@@ -323,7 +331,32 @@
         padding-top: 0.11vw;
         text-align: right;
         color: #fff;
-        font-size: 4vw;
+        font-size: 2.6vw;
+      }
+
+      #ui-heightmap-container {
+        position: absolute;
+        top: 20.8vw;
+        right: 0.3vw;
+        height: 5vw;
+        width: 15vw;
+        z-index: 150;
+        padding: 0;
+        font-family: 'Lato',sans-serif;
+        color: #fff;
+        line-height: initial;
+      }
+
+      #ui-heightmap {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #ui-heightmap-svg {
+        height: 100%;
+        width: 100%;
       }
 
       #ui-vpower-container {
@@ -526,13 +559,19 @@
         <div id="tracker-container">
             <div id="tracker"></div>
         </div>
-        <div id="ui-grade-container">
-            <div id="ui-grade">
+        <div id="ui-elevation-container">
+            <div id="ui-elevation">
+            </div>
+            <div id="ui-elevation-grade">
                 <div id="grade-unit">
                     <i id="grade-unit-icon" class="fa fa-long-arrow-up" aria-hidden="true"></i><br/>
                     %
                 </div>
                 <div id="grade">0</div>
+            </div>
+        </div>
+        <div id="ui-heightmap-container">
+            <div id="ui-heightmap">
             </div>
         </div>
         <div id="ui-vpower-container" style="display: none">

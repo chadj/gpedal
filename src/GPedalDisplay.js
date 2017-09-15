@@ -3,6 +3,7 @@ import {timeout, dateFormat} from './lib/utils';
 import {CalculateRho} from './lib/air_density';
 import {CalculateVelocity} from './lib/power_v_speed';
 import Mustache from 'mustache';
+import {d3} from "./lib/d3Wrapper";
 
 export class GPedalDisplay {
   constructor(points, riderWeight, powerMeter, heartMeter, cadenceMeter) {
@@ -77,6 +78,17 @@ export class GPedalDisplay {
     let streetview = this.streetViewPanoramaInit(this.ridingState.point.location, this.ridingState.point.heading);
     this.miniMap.setStreetView(streetview);
 
+    // Init elevation graph
+    this.zoomSvg = d3.select("#ui-elevation").append("svg")
+      .attr("id", "ui-elevation-svg")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("viewBox", "0 0 150 75")
+      .attr("preserveAspectRatio", "none");
+    // end elevation graph
+
+    this.drawHeightMap();
+
     this.powerMeter.addListener('power', power => this.collectPower(power));
     if(this.heartMeter) {
       this.heartMeter.addListener('hr', hr => this.collectHR(hr));
@@ -140,6 +152,142 @@ export class GPedalDisplay {
     });
 
     return streetview;
+  }
+
+  drawHeightMap() {
+    this.fullSvg = d3.select("#ui-heightmap").append("svg")
+      .attr("id", "ui-heightmap-svg")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("viewBox", "0 0 150 50")
+      .attr("preserveAspectRatio", "none");
+
+    this.fullSvgData = [];
+    for(let i=0; i < this.points.length; i++) {
+      this.fullSvgData.push([i, this.points[i].elevation]);
+    }
+
+    let [min, max] = d3.extent(this.fullSvgData, d => d[1]);
+    if((max - min) < 100) max = min + 120;
+
+    const zoomScaleY = d3.scaleLinear()
+      .domain([max,min])
+      .range([6, 45]);
+
+    const zoomScaleX = d3.scaleLinear()
+      .domain([0,this.points.length-1])
+      .range([0,150]);
+
+    this.fullSvgData = this.fullSvgData.map(d => {
+        return [zoomScaleX(d[0]),zoomScaleY(d[1])];
+    });
+
+    this.fullSvgData.push([150, 50])
+    this.fullSvgData.push([0, 50]);
+    this.fullSvgData.push([0, this.fullSvgData[0][1]]);
+
+    // Update
+    let p = this.fullSvg.selectAll("polygon")
+      .data([this.fullSvgData])
+      .attr("points", d => {
+        return d.map(d => {
+            return [d[0],d[1]].join(",");
+        }).join(" ");
+      });
+
+    // Enter
+    p.enter()
+      .append("polygon")
+      .attr("points", d => {
+        return d.map(d => {
+            return [d[0],d[1]].join(",");
+        }).join(" ");
+      })
+      .attr("fill", "#31A3CC")
+      .attr("stroke", "#31A3CC")
+      .attr("stroke-width", "1");
+  }
+
+  updateGraphs() {
+    const graphPad = 75 * 0.32;
+
+    let data = new Array(101);
+    for(let i=0; i < data.length; i++) {
+      let ptIdx = (i - 50) + this.ridingState.pointIdx;
+      if(ptIdx < 0) ptIdx = 0;
+      if(ptIdx >= this.points.length) ptIdx = this.points.length - 1;
+
+      data[i] = [i, this.points[ptIdx].elevation];
+    }
+
+    let [min, max] = d3.extent(data, d => d[1]);
+    if((max - min) < 75) max = min + 75;
+
+    const zoomScaleY = d3.scaleLinear()
+      .domain([max,min])
+      .range([15, 75 - graphPad]);
+
+    const zoomScaleX = d3.scaleLinear()
+      .domain([0,100])
+      .range([0,150]);
+
+    data = data.map(d => {
+        return [zoomScaleX(d[0]),zoomScaleY(d[1])];
+    });
+    data.push([150, 75])
+    data.push([0, 75]);
+    data.push([0, data[0][1]]);
+
+    // Update
+    let p = this.zoomSvg.selectAll("polygon")
+      .data([data])
+      .attr("points", d => {
+        return d.map(d => {
+            return [d[0],d[1]].join(",");
+        }).join(" ");
+      });
+
+    // Enter
+    p.enter()
+      .append("polygon")
+      .attr("points", d => {
+        return d.map(d => {
+            return [d[0],d[1]].join(",");
+        }).join(" ");
+      })
+      .attr("fill", "#31A3CC")
+      .attr("stroke", "#31A3CC")
+      .attr("stroke-width", "1");
+
+    // Update
+    let m = this.zoomSvg.selectAll("image")
+      .data([data[51]])
+      .attr("x", d => {return d[0]-7.5})
+      .attr("y", d => {return d[1]-15})
+      .attr("width", "15")
+      .attr("height", "15")
+      .attr("xlink:href", "/images/marker.svg");
+
+    // Enter
+    m.enter()
+      .append("image")
+      .attr("x", d => {d[0]})
+      .attr("y", d => {d[1]});
+
+    // Update
+    let f = this.fullSvg.selectAll("image")
+      .data([this.fullSvgData[this.ridingState.pointIdx]])
+      .attr("x", d => {return d[0]-3})
+      .attr("y", d => {return d[1]-6})
+      .attr("width", "6")
+      .attr("height", "6")
+      .attr("xlink:href", "/images/marker.svg");
+
+    // Enter
+    f.enter()
+      .append("image")
+      .attr("x", d => {d[0]})
+      .attr("y", d => {d[1]});
   }
 
   async updatePosition() {
@@ -263,6 +411,8 @@ export class GPedalDisplay {
 
         //console.log(this.ridingState.location.lat(), this.ridingState.location.lng(), this.ridingState.point.heading);
       }
+
+      this.updateGraphs();
 
       tick += 1;
       await timeout(1000);

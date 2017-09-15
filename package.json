@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "blueimp-md5": "^2.8.0",
+    "d3": "^4.10.2",
     "mustache": "^2.3.0",
     "url-search-params": "^0.10.0"
   }
