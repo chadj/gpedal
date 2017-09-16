@@ -83,7 +83,7 @@ export class GPedalDisplay {
       .attr("id", "ui-elevation-svg")
       .attr("x", 0)
       .attr("y", 0)
-      .attr("viewBox", "0 0 150 75")
+      .attr("viewBox", "0 0 150 60")
       .attr("preserveAspectRatio", "none");
     // end elevation graph
 
@@ -159,7 +159,7 @@ export class GPedalDisplay {
       .attr("id", "ui-heightmap-svg")
       .attr("x", 0)
       .attr("y", 0)
-      .attr("viewBox", "0 0 150 50")
+      .attr("viewBox", "0 0 150 37.5")
       .attr("preserveAspectRatio", "none");
 
     this.fullSvgData = [];
@@ -168,11 +168,11 @@ export class GPedalDisplay {
     }
 
     let [min, max] = d3.extent(this.fullSvgData, d => d[1]);
-    if((max - min) < 100) max = min + 120;
+    if((max - min) < 125) max = min + 125;
 
     const zoomScaleY = d3.scaleLinear()
       .domain([max,min])
-      .range([6, 45]);
+      .range([6, 33]);
 
     const zoomScaleX = d3.scaleLinear()
       .domain([0,this.points.length-1])
@@ -182,8 +182,8 @@ export class GPedalDisplay {
         return [zoomScaleX(d[0]),zoomScaleY(d[1])];
     });
 
-    this.fullSvgData.push([150, 50])
-    this.fullSvgData.push([0, 50]);
+    this.fullSvgData.push([150, 37.5])
+    this.fullSvgData.push([0, 37.5]);
     this.fullSvgData.push([0, this.fullSvgData[0][1]]);
 
     // Update
@@ -209,7 +209,7 @@ export class GPedalDisplay {
   }
 
   updateGraphs() {
-    const graphPad = 75 * 0.32;
+    const graphPad = 60 * 0.32;
 
     let data = new Array(101);
     for(let i=0; i < data.length; i++) {
@@ -225,7 +225,7 @@ export class GPedalDisplay {
 
     const zoomScaleY = d3.scaleLinear()
       .domain([max,min])
-      .range([15, 75 - graphPad]);
+      .range([15, 60 - graphPad]);
 
     const zoomScaleX = d3.scaleLinear()
       .domain([0,100])
@@ -234,8 +234,8 @@ export class GPedalDisplay {
     data = data.map(d => {
         return [zoomScaleX(d[0]),zoomScaleY(d[1])];
     });
-    data.push([150, 75])
-    data.push([0, 75]);
+    data.push([150, 60])
+    data.push([0, 60]);
     data.push([0, data[0][1]]);
 
     // Update
