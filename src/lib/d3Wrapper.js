@@ -1,5 +1,5 @@
-import {select, selectAll} from "d3-selection";
-import {scaleLinear} from "d3-scale";
-import {extent} from "d3-array";
+import {default as select} from "d3-selection/src/select";
+import {default as scaleLinear} from "d3-scale/src/linear";
+import {default as extent} from "d3-array/src/extent";
 
-export const d3 = {select, selectAll, scaleLinear, extent};
+export const d3 = {select, scaleLinear, extent};
