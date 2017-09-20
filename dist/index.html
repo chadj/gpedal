@@ -150,9 +150,9 @@
         font-size: 1.3vw;
         padding-right: 0.7vw;
         padding-left: 0.1vw;
-        margin-top: 2vw;
+        margin-top: 1.75vw;
         color: #31A3CC;
-        line-height: 0.6vw;
+        line-height: 1.15vw;
         text-align:center;
       }
 
@@ -525,7 +525,7 @@
                 <div id="speed-container">
                     <div id="speed-unit">
                         <i class="fa fa-tachometer" aria-hidden="true"></i><br/>
-                        mph
+                        <span id="speed-unit-value">mph</span>
                     </div>
                     <div id="speed">0</div>
                 </div>
@@ -533,14 +533,14 @@
                     <div id="distance-unit">
                         <i class="icon-odometer"></i>
                         <br/>
-                        mi
+                        <span id="distance-unit-value">mi</span>
                     </div>
                     <div id="distance">0</div>
                 </div>
                 <div id="climb-container">
                     <div id="climb-unit">
                         <i class="fa fa-area-chart" aria-hidden="true"></i><br/>
-                        ft
+                        <span id="climb-container-value">ft</span>
                     </div>
                     <div id="climb">0</div>
                 </div>
@@ -617,17 +617,48 @@
                     <form>
                         <div class="form-row">
                             <div class="form-group col-md-9">
-                              <label for="gpx-file-upload">GPX Route</label>
-                              <input type="file" class="form-control-file" accept=".gpx" id="gpx-file-upload">
-                              <p class="small" style="margin: 0">
-                                  GPX Route files can be created for free with <a href="https://www.komoot.com/" target="_blank">Komoot</a> or <a href="https://ridewithgps.com/" target="_blank">Ride with GPS</a>.  A sample gpx route can be downloaded <a href="/routes/washington_dc.gpx">here</a>.
-                              </p>
+                                <label for="gpx-file-upload">GPX Route</label>
+                                <!-- Nav tabs -->
+                                <ul id="route-nav" class="nav nav-tabs" role="tablist">
+                                  <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="tab" href="#upload" role="tab">Upload</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#continue" role="tab">Resume Ride</a>
+                                  </li>
+                                </ul>
+
+                                <!-- Tab panes -->
+                                <div class="tab-content">
+                                  <div class="tab-pane active" id="upload" role="tabpanel">
+                                      <br/>
+                                      <input type="file" class="form-control-file" accept=".gpx" id="gpx-file-upload">
+                                      <p class="small" style="margin: 0">
+                                          GPX Route files can be created for free with <a href="https://www.komoot.com/" target="_blank">Komoot</a> or <a href="https://ridewithgps.com/" target="_blank">Ride with GPS</a>.  A sample gpx route can be downloaded <a href="/routes/washington_dc.gpx">here</a>.
+                                      </p>
+                                  </div>
+                                  <div class="tab-pane" id="continue" role="tabpanel">
+                                      <br />
+                                      <select class="custom-select" id="continue-previous">
+                                        <option value="" selected>Select One</option>
+                                      </select>
+                                  </div>
+                                </div>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label for="rider-weight" class="col-form-label">Rider Weight</label>
-                                <input type="text" class="form-control" id="rider-weight" placeholder="190">
+                                <label for="display-unit" class="col-form-label">Display Unit</label> <br/>
+                                <select class="custom-select" id="display-unit">
+                                  <option value="metric">Metric</option>
+                                  <option value="imperial">Imperial</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="rider-weight" id="rider-weight-label" class="col-form-label">Rider Weight (kg)</label>
+                                <input type="text" class="form-control" id="rider-weight" placeholder="85">
                             </div>
                         </div>
                         <div class="form-row">

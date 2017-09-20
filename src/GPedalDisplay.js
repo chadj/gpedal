@@ -1,38 +1,55 @@
-import {geocode, getPanoramaByLocation} from './gmapPromises';
+import {geocode, getPanoramaByLocation} from './lib/gmapPromises';
 import {timeout, dateFormat} from './lib/utils';
 import {CalculateRho} from './lib/air_density';
 import {CalculateVelocity} from './lib/power_v_speed';
 import Mustache from 'mustache';
 import {d3} from "./lib/d3Wrapper";
+import {RoutePoint} from "./Route";
 
 export class GPedalDisplay {
-  constructor(points, riderWeight, powerMeter, heartMeter, cadenceMeter) {
+  constructor({id, powerMeter, heartMeter, cadenceMeter, riderWeight, unit, routeName='', history=[], points, ridingState}) {
+    this.id = id;
     this.powerMeter = powerMeter;
     this.heartMeter = heartMeter;
     this.cadenceMeter = cadenceMeter;
-    this.riderWeight = parseInt(riderWeight);
-    this.routeName = '';
-    this.history = [];
-    this.powerSamples = [];
+    this.riderWeight = riderWeight;
+    this.unit = unit;
+    this.routeName = routeName;
+    this.history = history;
     this.points = points;
-    this.ridingState = {
-      pointIdx: 0,
-      point: this.points[0],
-      pointPct: 0,
-      lastSampleTime: new Date(),
-      location: this.points[0].location,
-      elevation: this.points[0].elevation,
-      average_grade: 0,
-      mapMode: 'SV',
-      watts: 0,
-      rpm: undefined,
-      bpm: undefined,
-      speed: 0,
-      distance: 0,
-      climb: 0,
-      elapsed: 0,
-    };
+    this.ridingState = ridingState;
+    this.powerSamples = [];
 
+    if(this.id === undefined || this.id === null) {
+      this.id = (new Date()).getTime();
+    }
+
+    if(typeof this.riderWeight === 'string') {
+      this.riderWeight = parseInt(this.riderWeight);
+    }
+
+    if(this.ridingState === undefined || this.ridingState === null) {
+      this.ridingState = {
+        pointIdx: 0,
+        point: this.points[0],
+        pointPct: 0,
+        lastSampleTime: new Date(),
+        location: this.points[0].location,
+        elevation: this.points[0].elevation,
+        average_grade: 0,
+        mapMode: 'SV',
+        watts: 0,
+        rpm: undefined,
+        bpm: undefined,
+        speed: 0,
+        distance: 0,
+        climb: 0,
+        elapsed: 0,
+      };
+    }
+  }
+
+  async init() {
     this.miniMap = new google.maps.Map(document.getElementById('tracker'), {
       center: this.ridingState.point.location,
       zoom: 14,
@@ -97,9 +114,7 @@ export class GPedalDisplay {
     if(this.cadenceMeter) {
       this.cadenceMeter.addListener('cadence', cadence => this.collectCadence(cadence));
     }
-  }
 
-  async geocodeRoute() {
     let geoResults = await geocode(this.points[0].location);
     let skipTypes = ["street_address", "route", "intersection", "postal_code"];
     for(let r of geoResults) {
@@ -412,6 +427,12 @@ export class GPedalDisplay {
         //console.log(this.ridingState.location.lat(), this.ridingState.location.lng(), this.ridingState.point.heading);
       }
 
+      if(tick % 30 === 0) {
+        Promise.resolve().then(() => {
+          localStorage.setItem(this.cacheName(), JSON.stringify(this.toJSON()));
+        });
+      }
+
       this.updateGraphs();
 
       tick += 1;
@@ -427,7 +448,7 @@ export class GPedalDisplay {
     let options = {
       units: 'metric',
       // Rider Weight
-      rp_wr: this.riderWeight * 0.453592,
+      rp_wr: this.riderWeight * (this.unit === 'imperial' ? 0.453592 : 1),
       // Bike Weight
       rp_wb: 8,
       //  Frontal area A(m2)
@@ -466,7 +487,7 @@ export class GPedalDisplay {
         time = minutes+':'+seconds;
       }
 
-      let distance = (this.ridingState.distance * 0.000621371);
+      let distance = (this.ridingState.distance * (this.unit === 'imperial' ? 0.000621371 : 0.001));
       if(distance > 100) {
         distance = distance.toFixed();
       } else {
@@ -514,19 +535,15 @@ export class GPedalDisplay {
       document.getElementById('watts').innerHTML = watts;
       document.getElementById('heart').innerHTML = bpm;
       document.getElementById('cadence').innerHTML = rpm;
-      document.getElementById('speed').innerHTML = (this.ridingState.speed * 2.23694).toFixed();
+      document.getElementById('speed').innerHTML = (this.ridingState.speed * (this.unit === 'imperial' ? 2.23694 : 3.6)).toFixed();
       document.getElementById('distance').innerHTML = distance;
-      document.getElementById('climb').innerHTML = (this.ridingState.climb * 3.28084).toFixed();
+      document.getElementById('climb').innerHTML = (this.ridingState.climb * (this.unit === 'imperial' ? 3.28084 : 1)).toFixed();
       document.getElementById('time').innerHTML = time;
       document.getElementById('grade').innerHTML = grade;
 
-      // document.getElementById('watts').innerHTML = 2500;
-      // document.getElementById('heart').innerHTML = 260;
-      // document.getElementById('cadence').innerHTML = 230;
-      // document.getElementById('speed').innerHTML = 188;
-      // document.getElementById('distance').innerHTML = 55.3;
-      // document.getElementById('climb').innerHTML = 2300;
-      // document.getElementById('time').innerHTML = '0:00:00';
+      document.getElementById('distance-unit-value').innerHTML = this.unit === 'imperial' ? 'mi' : '&nbsp;km';
+      document.getElementById('speed-unit-value').innerHTML = this.unit === 'imperial' ? 'mph' : 'kph';
+      document.getElementById('climb-container-value').innerHTML = this.unit === 'imperial' ? 'ft' : 'm';
 
       await timeout(1000);
     }
@@ -611,7 +628,7 @@ export class GPedalDisplay {
     document.getElementById('ui-finalize-label').innerHTML = msg;
     if(localStorage.getItem('strava-oauth-code')) {
       let now = new Date();
-      let ride_name = "GPedal - ";
+      let ride_name = "GPedal.com - ";
       if(this.routeName) {
         ride_name += this.routeName;
       } else {
@@ -632,6 +649,49 @@ export class GPedalDisplay {
           });
       };
     }
+  }
+
+  cacheName() {
+    return "route-progress-"+this.id;
+  }
+
+  toJSON() {
+    let {history, id, points, riderWeight, ridingState, routeName, unit} = this;
+
+    history = history.map(h => {
+      h = Object.assign({}, h);
+      h.location = h.location.toJSON();
+      h.time = h.time.toJSON();
+      return h;
+    });
+
+    points = points.map(p => {return p.toJSON()});
+
+    ridingState = Object.assign({}, ridingState);
+    ridingState.lastSampleTime = ridingState.lastSampleTime.toJSON();
+    ridingState.location = ridingState.location.toJSON();
+    ridingState.point = ridingState.point.toJSON();
+    ridingState.bpm = undefined;
+    ridingState.rpm = undefined;
+    ridingState.speed = 0;
+    ridingState.watts = 0;
+
+    return {history, id, points, riderWeight, ridingState, routeName, unit};
+  }
+
+  static fromJSON(obj) {
+    for(let h of obj.history) {
+      h.location = new google.maps.LatLng(h.location.lat, h.location.lng);
+      h.time = new Date(h.time);
+    }
+
+    obj.points = obj.points.map(p => {return RoutePoint.fromJSON(p)});
+
+    obj.ridingState.lastSampleTime = new Date(obj.ridingState.lastSampleTime);
+    obj.ridingState.location = new google.maps.LatLng(obj.ridingState.location.lat, obj.ridingState.location.lng);
+    obj.ridingState.point = RoutePoint.fromJSON(obj.ridingState.point);
+
+    return new GPedalDisplay(obj);
   }
 
   static transitionUI() {

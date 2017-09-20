@@ -1,6 +1,6 @@
 import {ssci} from './lib/smoothKernel';
 import {timeout} from './lib/utils';
-import {getElevationAlongPath} from './gmapPromises';
+import {getElevationAlongPath} from './lib/gmapPromises';
 import md5 from 'blueimp-md5';
 
 export class RoutePoint {

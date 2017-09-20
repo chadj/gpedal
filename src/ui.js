@@ -5,6 +5,36 @@ import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
     BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser} from './Meter';
 import URLSearchParams from 'url-search-params';
 
+function getInProgressRoutes() {
+  return JSON.parse(localStorage.getItem('route-progress')) || [];
+}
+
+function unshiftInProgressRoute(mapDisplay) {
+  let routes = getInProgressRoutes();
+  routes = routes.filter(r => r !== mapDisplay.cacheName());
+  routes.unshift(mapDisplay.cacheName());
+  localStorage.setItem('route-progress', JSON.stringify(routes));
+}
+
+function removeInProgressRoute(mapDisplay) {
+  let routes = getInProgressRoutes();
+  routes = routes.filter(r => r !== mapDisplay.cacheName());
+  localStorage.removeItem(mapDisplay.cacheName());
+  localStorage.setItem('route-progress', JSON.stringify(routes));
+}
+
+function addInProgressRoute(mapDisplay) {
+  let routes = getInProgressRoutes();
+
+  routes.unshift(mapDisplay.cacheName());
+  if(routes.length > 3) {
+    let id = routes.shift();
+    localStorage.removeItem(id);
+  }
+
+  localStorage.setItem('route-progress', JSON.stringify(routes));
+}
+
 export function registerUI() {
   let thisLocationURL = new URL(window.location);
   let params = new URLSearchParams(thisLocationURL.search);
@@ -36,6 +66,19 @@ export function registerUI() {
     document.getElementById('btn-bluetooth-device-warning').style.display = 'block';
   }
 
+  let routes = getInProgressRoutes();
+  let $previous = document.getElementById('continue-previous');
+  for(let r of routes) {
+    var $option = document.createElement("option");
+    let route = JSON.parse(localStorage.getItem(r));
+    let routeDate = new Date();
+    routeDate.setTime(route.id);
+
+    $option.innerHTML = routeDate.toLocaleDateString() + " " + routeDate.toLocaleTimeString() + " - " + route.routeName;
+    $option.setAttribute('value', r);
+    $previous.add($option);
+  }
+
   let powerMeters = [
     ['virtual', new VirtualPowerMeter()]
   ]
@@ -47,6 +90,8 @@ export function registerUI() {
   let mapDisplay;
 
   let $gpx = document.getElementById('gpx-file-upload');
+  let $unit = document.getElementById('display-unit');
+  let $weight = document.getElementById('rider-weight');
   let $btn = document.getElementById('begin-session');
   let $btntxt = document.getElementById('btn-bluetooth-device-txt');
   let $stva = document.getElementById('strava-btn-connect');
@@ -55,6 +100,39 @@ export function registerUI() {
   let $hm = document.getElementById('hr-meter');
   let $cm = document.getElementById('cadence-meter');
   let $mob = document.getElementById('menuopen-btn');
+
+  /**
+  Route tab switching handler
+  */
+  for(let $a of document.querySelectorAll('#route-nav a')) {
+    $a.onclick = (e) => {
+      e.preventDefault();
+      let selector = e.target.getAttribute('href');
+
+      for(let $p of document.querySelectorAll('.nav-link')) {
+        $p.classList.remove('active');
+      }
+      e.target.classList.add('active');
+
+      for(let $p of document.querySelectorAll('.tab-pane')) {
+        $p.classList.remove('active');
+      }
+      document.querySelector(selector).classList.add('active');
+    };
+  }
+
+  /**
+  Unit change Handler
+  */
+  $unit.onchange = (e) => {
+    if($unit.value === 'imperial') {
+      document.getElementById('rider-weight-label').innerHTML = 'Rider Weight (lbs)';
+      document.getElementById('rider-weight').setAttribute('placeholder', 185);
+    } else {
+      document.getElementById('rider-weight-label').innerHTML = 'Rider Weight (kg)';
+      document.getElementById('rider-weight').setAttribute('placeholder', 85);
+    }
+  };
 
   /**
   Menu open Handler
@@ -220,7 +298,7 @@ export function registerUI() {
   $btn.onclick = (e) => {
     e.preventDefault();
 
-    if($gpx.value) {
+    if(($gpx.value || $previous.value) && $weight.value) {
       if(!$btn.classList.contains('disabled')) {
         $btn.classList.add('disabled');
       } else {
@@ -228,19 +306,12 @@ export function registerUI() {
       }
 
       (async function() {
-        let weight = document.getElementById('rider-weight').value;
-        if(!weight) {
-          weight = 220;
-        }
-
-        let fileBody = await fileRead($gpx.files[0]);
-        let factory = new GPXRoutePointFactory(fileBody);
-        let points = await factory.create();
+        let riderWeight = $weight.value;
+        let unit = $unit.value;
 
         let powerMeterID = $pm.value;
         let powerMeter = powerMeters.find(m => m[0] === powerMeterID)[1];
         powerMeter.listen();
-
 
         let heartMeterID = $hm.value;
         let heartMeter;
@@ -256,21 +327,60 @@ export function registerUI() {
           cadenceMeter.listen();
         }
 
+        localStorage.setItem('form-weight', riderWeight);
+        localStorage.setItem('form-unit', unit);
+
         GPedalDisplay.transitionUI();
-        mapDisplay = new GPedalDisplay(points, weight, powerMeter, heartMeter, cadenceMeter);
-        await mapDisplay.geocodeRoute();
+
+        if($previous.value) {
+          let raw = JSON.parse(localStorage.getItem($previous.value));
+          mapDisplay = GPedalDisplay.fromJSON(raw);
+          mapDisplay.powerMeter = powerMeter;
+          mapDisplay.heartMeter = heartMeter;
+          mapDisplay.cadenceMeter = cadenceMeter;
+
+          unshiftInProgressRoute(mapDisplay);
+        } else {
+          let fileBody = await fileRead($gpx.files[0]);
+          let factory = new GPXRoutePointFactory(fileBody);
+          let points = await factory.create();
+
+          mapDisplay = new GPedalDisplay({points, riderWeight, unit, powerMeter, heartMeter, cadenceMeter});
+          addInProgressRoute(mapDisplay);
+        }
+
+        await mapDisplay.init();
 
         mapDisplay.updateUI();
         await mapDisplay.updatePosition();
+        removeInProgressRoute(mapDisplay);
         mapDisplay.showFinalizeUI("Ride Finished");
       })()
       .catch(error => {
         console.log("Error: ", error);
       });
     } else {
+      let msg = '';
+      if(!$gpx.value && !$previous.value) {
+        msg = 'Please select a GPX file.';
+      } else if(!$weight.value) {
+        msg = 'Please enter the riders weight.';
+      }
+
       let $msg = document.getElementById('messages');
-      $msg.innerHTML = "Please select a GPX file.";
+      $msg.innerHTML = msg;
       $msg.style.display = 'block';
+
+      window.scrollTo(0, 0);
     }
   };
+
+  if(localStorage.getItem('form-weight')) {
+    $weight.value = localStorage.getItem('form-weight');
+  }
+
+  if(localStorage.getItem('form-unit')) {
+    $unit.value = localStorage.getItem('form-unit');
+    $unit.onchange();
+  }
 }
