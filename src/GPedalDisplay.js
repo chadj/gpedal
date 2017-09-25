@@ -4,7 +4,9 @@ import {CalculateRho} from './lib/air_density';
 import {CalculateVelocity} from './lib/power_v_speed';
 import Mustache from 'mustache';
 import {d3} from "./lib/d3Wrapper";
+import {credentials} from "./lib/oauth";
 import {RoutePoint} from "./Route";
+
 
 export class GPedalDisplay {
   constructor({id, powerMeter, heartMeter, cadenceMeter, riderWeight, unit, routeName='', history=[], points, ridingState}) {
@@ -582,9 +584,9 @@ export class GPedalDisplay {
     });
 
     let tokenForm = new FormData();
-    tokenForm.set('client_id', '19775');
-    tokenForm.set('client_secret', 'd1fd34e8c88fc5611ff41d9361e0668e9fe676f0');
-    tokenForm.set('code', localStorage.getItem('strava-oauth-code'));
+    tokenForm.set('client_id', credentials.STRAVA_CLIENT_ID);
+    tokenForm.set('client_secret', credentials.STRAVA_CLIENT_SECRET);
+    tokenForm.set('code', localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID));
     let token_response = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       body: tokenForm
@@ -626,7 +628,7 @@ export class GPedalDisplay {
   showFinalizeUI(msg) {
     document.getElementById('ui-finalize-container').style.display = 'block';
     document.getElementById('ui-finalize-label').innerHTML = msg;
-    if(localStorage.getItem('strava-oauth-code')) {
+    if(localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID)) {
       let now = new Date();
       let ride_name = "GPedal.com - ";
       if(this.routeName) {

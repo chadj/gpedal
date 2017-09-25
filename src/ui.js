@@ -1,6 +1,7 @@
 import {GPedalDisplay} from './GPedalDisplay';
 import {GPXRoutePointFactory} from './Route';
 import {fileRead, readCharacteristicValue} from './lib/utils';
+import {credentials} from "./lib/oauth";
 import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
     BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser} from './Meter';
 import URLSearchParams from 'url-search-params';
@@ -40,7 +41,7 @@ export function registerUI() {
   let params = new URLSearchParams(thisLocationURL.search);
   if(params.get('state') && params.get('code')) {
     let code = params.get('code');
-    localStorage.setItem('strava-oauth-code', code);
+    localStorage.setItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID, code);
     window.location.assign('/');
     return;
   }
@@ -52,7 +53,11 @@ export function registerUI() {
     window.location.assign(self);
   }
 
-  if(localStorage.getItem('strava-oauth-code')) {
+  if(credentials.STRAVA_CLIENT_ID === undefined || credentials.STRAVA_CLIENT_ID === null || credentials.STRAVA_CLIENT_ID === '') {
+    document.getElementById('container-strava').style.display = 'none';
+  }
+
+  if(localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID)) {
     document.getElementById('strava-btn-connect').style.display = 'none';
     document.getElementById('strava-btn-connected').style.display = 'block';
   }
@@ -156,7 +161,7 @@ export function registerUI() {
     let host = window.location.host;
     let self = proto + '//' + host + '/';
 
-    window.location.assign("https://www.strava.com/oauth/authorize?client_id=19775&response_type=code&redirect_uri="+self+"&scope=write&state=strava");
+    window.location.assign("https://www.strava.com/oauth/authorize?client_id=" + credentials.STRAVA_CLIENT_ID + "&response_type=code&redirect_uri="+self+"&scope=write&state=strava");
   };
 
   /**
