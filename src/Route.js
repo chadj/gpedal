@@ -1,6 +1,7 @@
 import {ssci} from './lib/smoothKernel';
 import {timeout} from './lib/utils';
 import {getElevationAlongPath} from './lib/gmapPromises';
+import {managedLocalStorage} from './lib/managedLocalStorage';
 import md5 from 'blueimp-md5';
 
 export class RoutePoint {
@@ -121,8 +122,10 @@ export class GPXRoutePointFactory {
   }
 
   async create() {
-    if(localStorage.getItem(this.md5)) {
-      let raw = JSON.parse(localStorage.getItem(this.md5));
+    let cacheName = 'gpx-cache-' + this.md5;
+    let raw = managedLocalStorage.get(cacheName)
+    if(raw !== undefined && raw !== null) {
+      managedLocalStorage.unshift('gpx-cache', cacheName);
       this.points = raw.map(r => {return RoutePoint.fromJSON(r)});
     } else {
       let gpxParser = new DOMParser();
@@ -137,7 +140,7 @@ export class GPXRoutePointFactory {
       await this.expandPointsWithElevation(gpxPoints);
       this.expandPointsWithGradeAndHeading();
 
-      localStorage.setItem(this.md5, JSON.stringify(this.points));
+      managedLocalStorage.add('gpx-cache', cacheName, this.points);
     }
 
     return this.points;

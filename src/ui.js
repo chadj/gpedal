@@ -5,36 +5,8 @@ import {credentials} from "./lib/oauth";
 import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
     BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser} from './Meter';
 import URLSearchParams from 'url-search-params';
+import {managedLocalStorage} from './lib/managedLocalStorage';
 
-function getInProgressRoutes() {
-  return JSON.parse(localStorage.getItem('route-progress')) || [];
-}
-
-function unshiftInProgressRoute(mapDisplay) {
-  let routes = getInProgressRoutes();
-  routes = routes.filter(r => r !== mapDisplay.cacheName());
-  routes.unshift(mapDisplay.cacheName());
-  localStorage.setItem('route-progress', JSON.stringify(routes));
-}
-
-function removeInProgressRoute(mapDisplay) {
-  let routes = getInProgressRoutes();
-  routes = routes.filter(r => r !== mapDisplay.cacheName());
-  localStorage.removeItem(mapDisplay.cacheName());
-  localStorage.setItem('route-progress', JSON.stringify(routes));
-}
-
-function addInProgressRoute(mapDisplay) {
-  let routes = getInProgressRoutes();
-
-  routes.unshift(mapDisplay.cacheName());
-  if(routes.length > 3) {
-    let id = routes.shift();
-    localStorage.removeItem(id);
-  }
-
-  localStorage.setItem('route-progress', JSON.stringify(routes));
-}
 
 export function registerUI() {
   let thisLocationURL = new URL(window.location);
@@ -71,11 +43,11 @@ export function registerUI() {
     document.getElementById('btn-bluetooth-device-warning').style.display = 'block';
   }
 
-  let routes = getInProgressRoutes();
+  let routes = managedLocalStorage.container('route-progress');
   let $previous = document.getElementById('continue-previous');
   for(let r of routes) {
     var $option = document.createElement("option");
-    let route = JSON.parse(localStorage.getItem(r));
+    let route = managedLocalStorage.get(r);
     let routeDate = new Date();
     routeDate.setTime(route.id);
 
@@ -335,30 +307,29 @@ export function registerUI() {
         localStorage.setItem('form-weight', riderWeight);
         localStorage.setItem('form-unit', unit);
 
-        GPedalDisplay.transitionUI();
-
         if($previous.value) {
-          let raw = JSON.parse(localStorage.getItem($previous.value));
+          let raw = managedLocalStorage.get($previous.value);
           mapDisplay = GPedalDisplay.fromJSON(raw);
           mapDisplay.powerMeter = powerMeter;
           mapDisplay.heartMeter = heartMeter;
           mapDisplay.cadenceMeter = cadenceMeter;
 
-          unshiftInProgressRoute(mapDisplay);
+          managedLocalStorage.unshift('route-progress', mapDisplay.cacheName());
         } else {
           let fileBody = await fileRead($gpx.files[0]);
           let factory = new GPXRoutePointFactory(fileBody);
           let points = await factory.create();
 
           mapDisplay = new GPedalDisplay({points, riderWeight, unit, powerMeter, heartMeter, cadenceMeter});
-          addInProgressRoute(mapDisplay);
+          managedLocalStorage.add('route-progress', mapDisplay.cacheName(), mapDisplay);
         }
 
+        GPedalDisplay.transitionUI();
         await mapDisplay.init();
 
         mapDisplay.updateUI();
         await mapDisplay.updatePosition();
-        removeInProgressRoute(mapDisplay);
+        managedLocalStorage.remove('route-progress', mapDisplay.cacheName());
         mapDisplay.showFinalizeUI("Ride Finished");
       })()
       .catch(error => {

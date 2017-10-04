@@ -6,6 +6,7 @@ import Mustache from 'mustache';
 import {d3} from "./lib/d3Wrapper";
 import {credentials} from "./lib/oauth";
 import {RoutePoint} from "./Route";
+import {managedLocalStorage} from './lib/managedLocalStorage';
 
 
 export class GPedalDisplay {
@@ -20,6 +21,7 @@ export class GPedalDisplay {
     this.history = history;
     this.points = points;
     this.ridingState = ridingState;
+    this.routeCompleted = false;
     this.powerSamples = [];
 
     if(this.id === undefined || this.id === null) {
@@ -311,6 +313,10 @@ export class GPedalDisplay {
     let tick = 0;
 
     while(true) {
+      if(this.routeCompleted) {
+        break;
+      }
+
       if(this.powerSamples.length) {
         this.ridingState.watts = this.powerSamples.reduce((a, b) => a + b, 0) / this.powerSamples.length;
         this.powerSamples.length = 0
@@ -431,7 +437,7 @@ export class GPedalDisplay {
 
       if(tick % 30 === 0) {
         Promise.resolve().then(() => {
-          localStorage.setItem(this.cacheName(), JSON.stringify(this.toJSON()));
+          managedLocalStorage.set(this.cacheName(), this);
         });
       }
 
@@ -440,6 +446,8 @@ export class GPedalDisplay {
       tick += 1;
       await timeout(1000);
     }
+
+    this.routeCompleted = true;
   }
 
   speedFromPower(power, grade, elevation) {
@@ -475,6 +483,10 @@ export class GPedalDisplay {
 
   async updateUI() {
     while(true) {
+      if(this.routeCompleted) {
+        break;
+      }
+
       let sec_num = this.ridingState.elapsed.toFixed();
       let hours   = Math.floor(sec_num / 3600);
       let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
@@ -560,6 +572,7 @@ export class GPedalDisplay {
     }
 
     $stva.innerHTML = "Exporting";
+    this.routeCompleted = true;
 
     let $name = document.getElementById('input-ride-name');
     let name = $name.value;
@@ -621,8 +634,9 @@ export class GPedalDisplay {
 
       await timeout(4000);
     }
-    $stva.innerHTML = "Done!";
 
+    managedLocalStorage.remove('route-progress', this.cacheName());
+    $stva.innerHTML = "Done!";
   }
 
   showFinalizeUI(msg) {
