@@ -46,14 +46,21 @@ export function registerUI() {
   let routes = managedLocalStorage.container('route-progress');
   let $previous = document.getElementById('continue-previous');
   for(let r of routes) {
-    var $option = document.createElement("option");
-    let route = managedLocalStorage.get(r);
-    let routeDate = new Date();
-    routeDate.setTime(route.id);
+    try {
+      let route = managedLocalStorage.get(r);
+      var $option = document.createElement("option");
+      let routeDate = new Date();
+      routeDate.setTime(route.id);
 
-    $option.innerHTML = routeDate.toLocaleDateString() + " " + routeDate.toLocaleTimeString() + " - " + route.routeName;
-    $option.setAttribute('value', r);
-    $previous.add($option);
+      $option.innerHTML = routeDate.toLocaleDateString() + " " + routeDate.toLocaleTimeString() + " - " + route.routeName;
+      $option.setAttribute('value', r);
+      $previous.add($option);
+    } catch(err) {
+      // Is data stored in old format?  Clear localStorage and reload.
+      localStorage.clear();
+      location.reload();
+      break;
+    }
   }
 
   let powerMeters = [
