@@ -34,15 +34,6 @@ export function registerUI() {
     document.getElementById('strava-btn-connected').style.display = 'block';
   }
 
-  if (typeof navigator !== 'undefined' && "bluetooth" in navigator) {
-    // web bluetooth available
-    document.getElementById('btn-bluetooth-device').style.display = 'inline-block';
-    document.getElementById('btn-bluetooth-device-warning').style.display = 'none';
-  } else {
-    document.getElementById('btn-bluetooth-device').style.display = 'none';
-    document.getElementById('btn-bluetooth-device-warning').style.display = 'block';
-  }
-
   let routes = managedLocalStorage.container('route-progress');
   let $previous = document.getElementById('continue-previous');
   for(let r of routes) {
@@ -149,6 +140,13 @@ export function registerUI() {
   $blt.onclick = (e) => {
     e.preventDefault();
 
+    if (typeof navigator === 'undefined' || !("bluetooth" in navigator)) {
+      // web bluetooth not available
+      document.getElementById('btn-bluetooth-device').style.display = 'none';
+      document.getElementById('btn-bluetooth-device-warning').style.display = 'block';
+      return;
+    }
+
     if(!$blt.classList.contains('disabled')) {
       $blt.classList.add('disabled');
     } else {
@@ -168,16 +166,14 @@ export function registerUI() {
       });
       let server = await device.gatt.connect();
 
-      let services = await server.getPrimaryServices();
-      for(let service of services) {
-        let serviceId = parseInt(service.uuid.substring(0,8), 16);
-        if(serviceId === 0x1818) {
-          // org.bluetooth.service.cycling_power
+      // org.bluetooth.service.cycling_power
+      if(!powerMeters.find(m => m[0] === device.id)) {
+        let service = undefined;
+        try {
+          service = await server.getPrimaryService(0x1818);
+        } catch(error){}
 
-          if(powerMeters.find(m => m[0] === device.id)) {
-            continue;
-          }
-
+        if(service) {
           let characteristic = await service.getCharacteristic(0x2A63);
           let parser = new CyclingPowerMeasurementParser();
           let value = await readCharacteristicValue(characteristic);
@@ -192,23 +188,31 @@ export function registerUI() {
             let powerMeter = new BlePowerMeter(device, server, service, characteristic);
             powerMeters.push([powerMeter.id, powerMeter]);
           }
-        } else if(serviceId === 0x1816) {
-          // org.bluetooth.service.cycling_speed_and_cadence
+        }
+      }
 
-          if(cadenceMeters.find(m => m[0] === device.id)) {
-            continue;
-          }
+      // org.bluetooth.service.cycling_speed_and_cadence
+      if(!cadenceMeters.find(m => m[0] === device.id)) {
+        let service = undefined;
+        try {
+          service = await server.getPrimaryService(0x1816);
+        } catch(error) {}
 
+        if(service) {
           let characteristic = await service.getCharacteristic(0x2A5B);
           let cadenceMeter = new BleCadenceMeter(device, server, service, characteristic);
           cadenceMeters.push([cadenceMeter.id, cadenceMeter]);
-        } else if(serviceId === 0x180D) {
-          // org.bluetooth.service.heart_rate
+        }
+      }
 
-          if(heartMeters.find(m => m[0] === device.id)) {
-            continue;
-          }
+      // org.bluetooth.service.heart_rate
+      if(!heartMeters.find(m => m[0] === device.id)) {
+        let service = undefined;
+        try {
+          service = await server.getPrimaryService(0x180D);
+        } catch(error) {}
 
+        if(service) {
           let characteristic = await service.getCharacteristic(0x2A37);
           let hrMeter = new BleHRMeter(device, server, service, characteristic);
           heartMeters.push([hrMeter.id, hrMeter]);
@@ -225,8 +229,6 @@ export function registerUI() {
         }
         $pm.add($option);
       }
-
-      //
 
       $hm.options.length = 0;
       for(let [key, hm] of heartMeters) {
