@@ -4,8 +4,9 @@ import {fileRead, readCharacteristicValue} from './lib/utils';
 import {credentials} from "./lib/oauth";
 import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
     BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser} from './Meter';
-import URLSearchParams from 'url-search-params';
 import {managedLocalStorage} from './lib/managedLocalStorage';
+import URLSearchParams from 'url-search-params';
+import fscreen from 'fscreen';
 
 
 export function registerUI() {
@@ -75,6 +76,7 @@ export function registerUI() {
   let $hm = document.getElementById('hr-meter');
   let $cm = document.getElementById('cadence-meter');
   let $mob = document.getElementById('menuopen-btn');
+  let $fsc = document.getElementById('btn-fullscreen');
 
   /**
   Route tab switching handler
@@ -118,6 +120,19 @@ export function registerUI() {
       mapDisplay.showFinalizeUI("Complete Ride");
     } else {
       document.getElementById('ui-finalize-container').style.display = 'none';
+    }
+  };
+
+  /**
+  Fullscreen button
+  */
+  $fsc.onclick = (e) => {
+    e.preventDefault();
+
+    if (fscreen.fullscreenElement !== null) {
+      fscreen.exitFullscreen();
+    } else {
+      fscreen.requestFullscreen(document.body);
     }
   };
 

@@ -457,7 +457,7 @@
         position: absolute;
         top: 11.3vw;
         left: 30vw;
-        height: 12vw;
+        /*height: 12vw;*/
         width: 28vw;
         z-index: 150;
         padding: 0;
@@ -502,6 +502,14 @@
         background-color: #fa632e;
         border-color: #e0430b;
         font-size: 1.5vw;
+        margin-bottom: 0.4vw;
+        padding: .5vw .75vw;
+      }
+
+      #btn-fullscreen {
+        background-color: #fa632e;
+        border-color: #e0430b;
+        font-size: 1.5vw;
         padding: .5vw .75vw;
       }
 
@@ -512,6 +520,10 @@
         left: 0;
         height: 100%;
         width: 100%;
+      }
+
+      #rider-weight {
+        width: 20vw;
       }
 
       html, body {
@@ -621,6 +633,7 @@
                 <div id="ui-finalize-actions">
                     <input id="input-ride-name" class="form-control" type="text" style="display: none" placeholder="Name Ride">
                     <a href="#" id="btn-export-strava" class="btn btn-secondary active" role="button" aria-pressed="true" style="display: none">Export to Strava</a>
+                    <a href="#" id="btn-fullscreen" class="btn btn-secondary active" role="button" aria-pressed="true" style="display: block">Go Fullscreen</a>
                 </div>
             </div>
         </div>
@@ -633,14 +646,14 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-6">
+                <div class="col-12">
                     <div class="alert alert-danger" role="alert" id="messages" style="display: none;">
 
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-6">
+                <div class="col-12">
                     <form>
                         <div class="form-row">
                             <div class="form-group col-md-9">
@@ -728,11 +741,11 @@
                             </div>
                         </div>
                         <div class="form-row" id="container-strava">
-                            <div class="form-group col-md-9">
+                            <div class="form-group col-md-6">
                                 <label class="col-form-label">Connections</label>
                                 <div class="container">
                                     <div class="row">
-                                        <div class="col-6">
+                                        <div class="col-4" style="padding-left: 0; padding-right: 0">
                                             <img src="/images/strava.png" id="strava-connection" style="width: 100%; margin-top: 5px"/>
                                         </div>
                                         <div class="col-6">
