@@ -7,6 +7,7 @@ import {d3} from "./lib/d3Wrapper";
 import {credentials} from "./lib/oauth";
 import {RoutePoint} from "./Route";
 import {managedLocalStorage} from './lib/managedLocalStorage';
+import {FormDataPolyfill} from 'formdata-polyfill';
 
 
 export class GPedalDisplay {
