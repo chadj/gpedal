@@ -15,7 +15,12 @@ export function registerUI() {
   if(params.get('state') && params.get('code')) {
     let code = params.get('code');
     localStorage.setItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID, code);
-    window.location.assign('/');
+
+    let path = '/';
+    if(params.get('useant') === 'true') {
+      path += "?useant=true"
+    }
+    window.location.assign(path);
     return;
   }
 
@@ -222,8 +227,11 @@ export function registerUI() {
     let proto = window.location.protocol;
     let host = window.location.host;
     let self = proto + '//' + host + '/';
+    if(params.get('useant') === 'true') {
+      self += "?useant=true"
+    }
 
-    window.location.assign("https://www.strava.com/oauth/authorize?client_id=" + credentials.STRAVA_CLIENT_ID + "&response_type=code&redirect_uri="+self+"&scope=write&state=strava");
+    window.location.assign("https://www.strava.com/oauth/authorize?client_id=" + credentials.STRAVA_CLIENT_ID + "&response_type=code&redirect_uri="+encodeURIComponent(self)+"&scope=write&state=strava");
   };
 
   /**
