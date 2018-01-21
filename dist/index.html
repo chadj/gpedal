@@ -7,7 +7,7 @@
     <meta name="description" content="Virtually ride indoors with Google Street View and bluetooth bike power meters"/>
     <meta property="og:title" content="GPedal" />
     <meta property="og:description" content="Virtually ride indoors with Google Street View and bluetooth bike power meters.  Indoor bike riding with Google Maps and BLE bike power meters." />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
     <link rel="stylesheet" href="/css/odometer.css">
     <link href="https://fonts.googleapis.com/css?family=Lato:900" rel="stylesheet">
@@ -682,7 +682,7 @@
                             </div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group col-md-9">
+                            <div id="bluetooth-device-container" class="form-group col-md-9">
                                 <label for="btn-bluetooth-device" class="col-form-label">Bluetooth Devices</label>
                                   <br/>
                                   <a id="btn-bluetooth-device" class="btn btn-primary" href="#" role="button">
@@ -694,6 +694,26 @@
                                       On Windows use Chrome with the <a href="https://github.com/urish/web-bluetooth-polyfill" target="_blank">Windows 10 Web Bluetooth Polyfill</a> installed.<br /><br />
                                       On iPhone or iPad use the <a href="https://itunes.apple.com/us/app/webble/id1193531073">WebBLE Browser</a> available from the App Store.
                                   </p>
+                                  <br/>
+                                  <span class="small">
+                                      <a href="#" id="btn-useant">Switch to Ant+ Sensors</a>
+                                  </span>
+                            </div>
+                            <div id="ant-device-container" class="form-group col-md-9" style="display: none">
+                                <label for="btn-ant-device" class="col-form-label">Ant Devices</label>
+                                  <br/>
+                                  <a id="btn-ant-device" class="btn btn-warning" href="#" role="button">
+                                    <i class="fa fa-wifi" aria-hidden="true"></i>
+                                    <span id="btn-ant-device-txt">Scan</span>
+                                  </a>
+                                  <input type="text" id="ant-ws-url" class="form-control" placeholder="ANT-WS server address" style="display: inline; width: 300px">
+                                  <span id="btn-ant-device-error" class="small" style="color: red; display:none">
+                                  </span>
+                                  <br/>
+                                  <span id="btn-ant-device-warning" class="small" style="">
+                                      Download and run the <a href="https://github.com/chadj/ant-ws" target="_blank">ANT-WS</a> server locally to relay ANT+ messages over websockets<br/>
+                                      <a href="#" id="btn-useble">Switch to BLE Sensors</a>
+                                  </span>
                             </div>
                         </div>
                         <div class="form-row">

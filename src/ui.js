@@ -3,7 +3,7 @@ import {GPXRoutePointFactory} from './Route';
 import {fileRead, readCharacteristicValue} from './lib/utils';
 import {credentials} from "./lib/oauth";
 import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
-    BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser} from './Meter';
+    BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser, AntMeterLocator} from './Meter';
 import {managedLocalStorage} from './lib/managedLocalStorage';
 import URLSearchParams from 'url-search-params';
 import fscreen from 'fscreen';
@@ -20,7 +20,9 @@ export function registerUI() {
   }
 
   let proto = window.location.protocol;
-  if(proto !== 'https:') {
+  let isBle = (proto === 'https:');
+
+  if(proto !== 'https:' && params.get('useant') !== 'true') {
     let host = window.location.host;
     let self = 'https://' + host + '/';
     window.location.assign(self);
@@ -70,13 +72,72 @@ export function registerUI() {
   let $weight = document.getElementById('rider-weight');
   let $btn = document.getElementById('begin-session');
   let $btntxt = document.getElementById('btn-bluetooth-device-txt');
+  let $atntxt = document.getElementById('btn-ant-device-txt');
   let $stva = document.getElementById('strava-btn-connect');
   let $blt = document.getElementById('btn-bluetooth-device');
+  let $alt = document.getElementById('btn-ant-device');
   let $pm = document.getElementById('power-meter');
   let $hm = document.getElementById('hr-meter');
   let $cm = document.getElementById('cadence-meter');
   let $mob = document.getElementById('menuopen-btn');
   let $fsc = document.getElementById('btn-fullscreen');
+  let $blecontainer = document.getElementById('bluetooth-device-container');
+  let $antcontainer = document.getElementById('ant-device-container');
+  let $antwsurl = document.getElementById('ant-ws-url');
+
+  let redrawMeters = device => {
+    $pm.options.length = 0;
+    for(let [key, pm] of powerMeters) {
+      var $option = document.createElement("option");
+      $option.innerHTML = pm.name;
+      $option.setAttribute('value', pm.id);
+      if(pm.id === device.id) {
+        $option.setAttribute('selected', 'true');
+      }
+      $pm.add($option);
+    }
+    if($pm.value === 'virtual' && powerMeters.length > 1) {
+      $pm.options[1].setAttribute('selected', 'true');
+    }
+
+    $hm.options.length = 0;
+    for(let [key, hm] of heartMeters) {
+      var $option = document.createElement("option");
+      $option.innerHTML = hm.name;
+      $option.setAttribute('value', hm.id);
+      if(hm.id === device.id) {
+        $option.setAttribute('selected', 'true');
+      }
+      $hm.options.add($option);
+    }
+
+    if($hm.options.length === 0) {
+      var $option = document.createElement("option");
+      $option.innerHTML = 'Disabled';
+      $option.setAttribute('value', '');
+      $hm.options.add($option);
+    }
+
+    //
+
+    $cm.options.length = 0;
+    for(let [key, cm] of cadenceMeters) {
+      var $option = document.createElement("option");
+      $option.innerHTML = cm.name;
+      $option.setAttribute('value', cm.id);
+      if(cm.id === device.id) {
+        $option.setAttribute('selected', 'true');
+      }
+      $cm.options.add($option);
+    }
+
+    if($cm.options.length === 0) {
+      var $option = document.createElement("option");
+      $option.innerHTML = 'Disabled';
+      $option.setAttribute('value', '');
+      $cm.options.add($option);
+    }
+  };
 
   /**
   Route tab switching handler
@@ -97,6 +158,22 @@ export function registerUI() {
       document.querySelector(selector).classList.add('active');
     };
   }
+
+  document.getElementById('btn-useant').onclick = (e) => {
+    e.preventDefault();
+
+    let host = window.location.host;
+    let self = 'http://' + host + '/?useant=true';
+    window.location.assign(self);
+  };
+
+  document.getElementById('btn-useble').onclick = (e) => {
+    e.preventDefault();
+
+    let host = window.location.host;
+    let self = 'https://' + host + '/';
+    window.location.assign(self);
+  };
 
   /**
   Unit change Handler
@@ -181,6 +258,7 @@ export function registerUI() {
       });
       let server = await device.gatt.connect();
 
+      let meter = undefined;
       // org.bluetooth.service.cycling_power
       if(!powerMeters.find(m => m[0] === device.id)) {
         let service = undefined;
@@ -196,12 +274,12 @@ export function registerUI() {
 
           // is Crank Revolution Data Present ?
           if('cumulative_crank_revolutions' in data) {
-            let meter = new BlePowerCadenceMeter(device, server, service, characteristic);
+            meter = new BlePowerCadenceMeter(device, server, service, characteristic);
             powerMeters.push([meter.id, meter]);
             cadenceMeters.push([meter.id, meter]);
           } else {
-            let powerMeter = new BlePowerMeter(device, server, service, characteristic);
-            powerMeters.push([powerMeter.id, powerMeter]);
+            meter = new BlePowerMeter(device, server, service, characteristic);
+            powerMeters.push([meter.id, meter]);
           }
         }
       }
@@ -215,8 +293,8 @@ export function registerUI() {
 
         if(service) {
           let characteristic = await service.getCharacteristic(0x2A5B);
-          let cadenceMeter = new BleCadenceMeter(device, server, service, characteristic);
-          cadenceMeters.push([cadenceMeter.id, cadenceMeter]);
+          meter = new BleCadenceMeter(device, server, service, characteristic);
+          cadenceMeters.push([meter.id, meter]);
         }
       }
 
@@ -229,58 +307,13 @@ export function registerUI() {
 
         if(service) {
           let characteristic = await service.getCharacteristic(0x2A37);
-          let hrMeter = new BleHRMeter(device, server, service, characteristic);
-          heartMeters.push([hrMeter.id, hrMeter]);
+          meter = new BleHRMeter(device, server, service, characteristic);
+          heartMeters.push([meter.id, meter]);
         }
       }
 
-      $pm.options.length = 0;
-      for(let [key, pm] of powerMeters) {
-        var $option = document.createElement("option");
-        $option.innerHTML = pm.name;
-        $option.setAttribute('value', pm.id);
-        if(pm.id === device.id) {
-          $option.setAttribute('selected', 'true');
-        }
-        $pm.add($option);
-      }
-
-      $hm.options.length = 0;
-      for(let [key, hm] of heartMeters) {
-        var $option = document.createElement("option");
-        $option.innerHTML = hm.name;
-        $option.setAttribute('value', hm.id);
-        if(hm.id === device.id) {
-          $option.setAttribute('selected', 'true');
-        }
-        $hm.options.add($option);
-      }
-
-      if($hm.options.length === 0) {
-        var $option = document.createElement("option");
-        $option.innerHTML = 'Disabled';
-        $option.setAttribute('value', '');
-        $hm.options.add($option);
-      }
-
-      //
-
-      $cm.options.length = 0;
-      for(let [key, cm] of cadenceMeters) {
-        var $option = document.createElement("option");
-        $option.innerHTML = cm.name;
-        $option.setAttribute('value', cm.id);
-        if(cm.id === device.id) {
-          $option.setAttribute('selected', 'true');
-        }
-        $cm.options.add($option);
-      }
-
-      if($cm.options.length === 0) {
-        var $option = document.createElement("option");
-        $option.innerHTML = 'Disabled';
-        $option.setAttribute('value', '');
-        $cm.options.add($option);
+      if(meter) {
+        redrawMeters(meter);
       }
 
       $blt.classList.remove('disabled');
@@ -289,6 +322,70 @@ export function registerUI() {
     .catch(error => {
       $blt.classList.remove('disabled');
       $btntxt.innerHTML = "Connect";
+      console.log("Error: ", error);
+    });
+  };
+
+  /**
+  Ant Button Handler
+  */
+  $alt.onclick = (e) => {
+    e.preventDefault();
+
+    if(!$alt.classList.contains('disabled')) {
+      $alt.classList.add('disabled');
+    } else {
+      return;
+    }
+
+    $atntxt.innerHTML = "Scanning ...";
+    let $anterr = document.getElementById('btn-ant-device-error');
+    $antwsurl.style.display = 'none';
+    $anterr.style.display = 'none';
+    (async function() {
+      let antwsURL = $antwsurl.value;
+      localStorage.setItem('ant-ws-url', antwsURL);
+
+      if(!antwsURL) {
+        antwsURL = 'http://localhost:8000/';
+      }
+      const locator = new AntMeterLocator(antwsURL);
+
+      locator.addListener('bike_power', meter => {
+        powerMeters.push([meter.id, meter]);
+        redrawMeters(meter);
+      });
+
+      locator.addListener('speed_cadence', meter => {
+        cadenceMeters.push([meter.id, meter]);
+        redrawMeters(meter);
+      });
+
+      locator.addListener('hr', meter => {
+        heartMeters.push([meter.id, meter]);
+        redrawMeters(meter);
+      });
+
+      locator.addListener('namechange', meter => {
+        redrawMeters(meter);
+      });
+
+      locator.addListener('error', error => {
+        $antwsurl.style.display = 'inline';
+
+        $anterr.innerHTML = '<br/> Could not connect to ANT-WS server located at: ' + locator.url;
+        $anterr.style.display = 'inline';
+
+        $alt.classList.remove('disabled');
+        $atntxt.innerHTML = "Scan";
+      });
+
+      locator.scan();
+
+    })()
+    .catch(error => {
+      $alt.classList.remove('disabled');
+      $atntxt.innerHTML = "Scan";
       console.log("Error: ", error);
     });
   };
@@ -382,5 +479,14 @@ export function registerUI() {
   if(localStorage.getItem('form-unit')) {
     $unit.value = localStorage.getItem('form-unit');
     $unit.onchange();
+  }
+
+  if(localStorage.getItem('ant-ws-url')) {
+    $antwsurl.value = localStorage.getItem('ant-ws-url');
+  }
+
+  if(!isBle) {
+    $blecontainer.style.display = 'none';
+    $antcontainer.style.display = 'block';
   }
 }

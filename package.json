@@ -19,6 +19,7 @@
   "dependencies": {
     "blueimp-md5": "^2.8.0",
     "d3": "^4.10.2",
+    "faye": "^1.2.4",
     "formdata-polyfill": "^3.0.9",
     "fscreen": "^1.0.2",
     "lz-string": "^1.4.4",
