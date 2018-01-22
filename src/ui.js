@@ -164,22 +164,6 @@ export function registerUI() {
     };
   }
 
-  document.getElementById('btn-useant').onclick = (e) => {
-    e.preventDefault();
-
-    let host = window.location.host;
-    let self = 'http://' + host + '/?useant=true';
-    window.location.assign(self);
-  };
-
-  document.getElementById('btn-useble').onclick = (e) => {
-    e.preventDefault();
-
-    let host = window.location.host;
-    let self = 'https://' + host + '/';
-    window.location.assign(self);
-  };
-
   /**
   Unit change Handler
   */
