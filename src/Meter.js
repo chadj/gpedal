@@ -249,7 +249,7 @@ export class Meter {
   constructor () {
     this.listeners = {};
     this.timeoutID = undefined;
-    this.milliTimeout = 5000;
+    this.milliTimeout = 8000;
   }
 
   clearValueOnTimeout(value) {
