@@ -365,7 +365,7 @@ export function registerUI() {
       locator.addListener('error', error => {
         $antwsurl.style.display = 'inline';
 
-        $anterr.innerHTML = '<br/> Could not connect to ANT-WS server located at: ' + locator.url;
+        $anterr.innerHTML = '<br/> Could not connect to the ANT-WS server located at: ' + locator.url;
         $anterr.style.display = 'inline';
 
         $alt.classList.remove('disabled');
