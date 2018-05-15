@@ -645,7 +645,7 @@ export class GPedalDisplay {
     document.getElementById('ui-finalize-label').innerHTML = msg;
     if(localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID)) {
       let now = new Date();
-      let ride_name = "GPedal.com - ";
+      let ride_name = "GPedal - ";
       if(this.routeName) {
         ride_name += this.routeName;
       } else {
