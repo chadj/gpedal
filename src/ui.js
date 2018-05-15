@@ -16,7 +16,7 @@ export function registerUI() {
     let code = params.get('code');
     localStorage.setItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID, code);
 
-    let path = '/';
+    let path = window.location.pathname;
     if(params.get('useant') === 'true') {
       path += "?useant=true"
     }
@@ -29,7 +29,7 @@ export function registerUI() {
 
   if(proto !== 'https:' && params.get('useant') !== 'true') {
     let host = window.location.host;
-    let self = 'https://' + host + '/';
+    let self = 'https://' + host + window.location.pathname;
     window.location.assign(self);
   }
 
@@ -210,7 +210,7 @@ export function registerUI() {
 
     let proto = window.location.protocol;
     let host = window.location.host;
-    let self = proto + '//' + host + '/';
+    let self = proto + '//' + host + window.location.pathname;
     if(params.get('useant') === 'true') {
       self += "?useant=true"
     }
