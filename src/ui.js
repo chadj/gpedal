@@ -25,13 +25,7 @@ export function registerUI() {
   }
 
   let proto = window.location.protocol;
-  let isBle = (proto === 'https:');
-
-  if(proto !== 'https:' && params.get('useant') !== 'true') {
-    let host = window.location.host;
-    let self = 'https://' + host + window.location.pathname;
-    window.location.assign(self);
-  }
+  let isBle = !(params.get('useant') === 'true');
 
   if(credentials.STRAVA_CLIENT_ID === undefined || credentials.STRAVA_CLIENT_ID === null || credentials.STRAVA_CLIENT_ID === '') {
     document.getElementById('container-strava').style.display = 'none';
@@ -339,7 +333,11 @@ export function registerUI() {
       localStorage.setItem('ant-ws-url', antwsURL);
 
       if(!antwsURL) {
-        antwsURL = 'http://localhost:8000/';
+        if(proto === 'https:') {
+          antwsURL = 'https://localhost:4430/';
+        } else {
+          antwsURL = 'http://localhost:8000/';
+        }
       }
       const locator = new AntMeterLocator(antwsURL);
 
@@ -365,7 +363,12 @@ export function registerUI() {
       locator.addListener('error', error => {
         $antwsurl.style.display = 'inline';
 
-        $anterr.innerHTML = '<br/> Could not connect to the ANT-WS server located at: ' + locator.url;
+        let msg_extra = '';
+        if(proto === 'https:') {
+          msg_extra = '<br/>You may need to allow a self signed cert for '+ locator.url + ' by clicking <a href="'+ locator.url + '" target="_blank">here</a>';
+        }
+
+        $anterr.innerHTML = '<br/> Could not connect to the ANT-WS server located at: ' + locator.url + msg_extra;
         $anterr.style.display = 'inline';
 
         $alt.classList.remove('disabled');
