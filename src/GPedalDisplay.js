@@ -93,7 +93,7 @@ export class GPedalDisplay {
     this.fullMarker = new google.maps.Marker({
         position: this.ridingState.point.location,
         map: this.fullMap,
-        icon: '/images/here.png'
+        icon: './images/here.png'
     });
     this.fullMarker.setMap(this.fullMap);
 
