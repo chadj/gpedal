@@ -286,7 +286,7 @@ export class GPedalDisplay {
       .attr("y", d => {return d[1]-15})
       .attr("width", "15")
       .attr("height", "15")
-      .attr("xlink:href", "/images/marker.svg");
+      .attr("xlink:href", "./images/marker.svg");
 
     // Enter
     m.enter()
@@ -301,7 +301,7 @@ export class GPedalDisplay {
       .attr("y", d => {return d[1]-6})
       .attr("width", "6")
       .attr("height", "6")
-      .attr("xlink:href", "/images/marker.svg");
+      .attr("xlink:href", "./images/marker.svg");
 
     // Enter
     f.enter()
