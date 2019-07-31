@@ -3,7 +3,8 @@ import {GPXRoutePointFactory} from './Route';
 import {fileRead, readCharacteristicValue} from './lib/utils';
 import {credentials} from "./lib/oauth";
 import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
-    BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser, AntMeterLocator} from './Meter';
+    BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser, AntMeterLocator,
+    CycleopsMagnetoPowerCurve} from './Meter';
 import {managedLocalStorage} from './lib/managedLocalStorage';
 import URLSearchParams from 'url-search-params';
 import fscreen from 'fscreen';
@@ -57,7 +58,8 @@ export function registerUI() {
   }
 
   let powerMeters = [
-    ['virtual', new VirtualPowerMeter()]
+    ['virtual', new VirtualPowerMeter()],
+    ['cycleopsmagnetopowercurve', new CycleopsMagnetoPowerCurve()]
   ]
 
   let heartMeters = []
@@ -96,7 +98,7 @@ export function registerUI() {
       $pm.add($option);
     }
     if($pm.value === 'virtual' && powerMeters.length > 1) {
-      $pm.options[1].setAttribute('selected', 'true');
+      $pm.options[0].setAttribute('selected', 'true');
     }
 
     $hm.options.length = 0;
@@ -402,10 +404,6 @@ export function registerUI() {
         let riderWeight = $weight.value;
         let unit = $unit.value;
 
-        let powerMeterID = $pm.value;
-        let powerMeter = powerMeters.find(m => m[0] === powerMeterID)[1];
-        powerMeter.listen();
-
         let heartMeterID = $hm.value;
         let heartMeter;
         if(heartMeterID) {
@@ -419,6 +417,10 @@ export function registerUI() {
           cadenceMeter = cadenceMeters.find(m => m[0] === cadenceMeterID)[1];
           cadenceMeter.listen();
         }
+
+        let powerMeterID = $pm.value;
+        let powerMeter = powerMeters.find(m => m[0] === powerMeterID)[1];
+        powerMeter.listen({heartMeter, cadenceMeter});
 
         localStorage.setItem('form-weight', riderWeight);
         localStorage.setItem('form-unit', unit);

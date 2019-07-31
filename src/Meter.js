@@ -331,6 +331,8 @@ export class BlePowerCadenceMeter extends BleMeter {
 
     this.lastCrankRevolutions = 0;
     this.lastCrankTime = 0;
+    this.lastWheelRevolutions = 0;
+    this.lastWheelTime = 0;
   }
 
   listen() {
@@ -340,7 +342,10 @@ export class BlePowerCadenceMeter extends BleMeter {
         let power = data['instantaneous_power'];
         let crankRevolutions = data['cumulative_crank_revolutions'];
         let crankTime = data['last_crank_event_time'];
+        let wheelRevolutions = data['cumulative_wheel_revolutions'];
+        let wheelTime = data['last_wheel_event_time'];
 
+        /* Crank Calc */
         if(this.lastCrankTime > crankTime) {
           this.lastCrankTime = this.lastCrankTime - 65536;
         }
@@ -357,10 +362,34 @@ export class BlePowerCadenceMeter extends BleMeter {
 
         this.lastCrankRevolutions = crankRevolutions;
         this.lastCrankTime = crankTime;
+        /* End Crank Calc */
+
+        /* Wheel Calc */
+        if(wheelRevolutions !== undefined && wheelTime !== undefined) {
+            if(this.lastWheelTime > wheelTime) {
+                this.lastWheelTime = this.lastWheelTime - 65536;
+            }
+            if(this.lastWheelRevolutions > wheelRevolutions) {
+                this.lastWheelRevolutions = this.lastWheelRevolutions - 65536;
+            }
+
+            let wheelRevs = wheelRevolutions - this.lastWheelRevolutions;
+            let wheelDuration = (wheelTime - this.lastWheelTime) / 1024;
+            let wheelRpm = 0;
+            if(wheelDuration > 0) {
+                wheelRpm = (wheelRevs / wheelDuration) * 60;
+            }
+
+            this.lastWheelRevolutions = wheelRevolutions;
+            this.lastWheelTime = wheelTime;
+
+            this.dispatch('wheelrpm', wheelRpm);
+        }
+        /* End Wheel Calc */
 
         this.dispatch('power', power);
         this.dispatch('cadence', rpm);
-        this.clearValueOnTimeout(['power', 'cadence']);
+        this.clearValueOnTimeout(['power', 'cadence', 'wheelrpm']);
       });
       this.characteristic.startNotifications();
       this.listening = true;
@@ -403,6 +432,8 @@ export class BleCadenceMeter extends BleMeter  {
 
     this.lastCrankRevolutions = 0;
     this.lastCrankTime = 0;
+    this.lastWheelRevolutions = 0;
+    this.lastWheelTime = 0;
   }
 
   listen() {
@@ -411,28 +442,52 @@ export class BleCadenceMeter extends BleMeter  {
         let data = this.parser.getData(event.target.value);
         let crankRevolutions = data['cumulative_crank_revolutions'];
         let crankTime = data['last_crank_event_time'];
+        let wheelRevolutions = data['cumulative_wheel_revolutions'];
+        let wheelTime = data['last_wheel_event_time'];
 
         if(crankRevolutions !== undefined && crankTime !== undefined) {
-          if(this.lastCrankTime > crankTime) {
-            this.lastCrankTime = this.lastCrankTime - 65536;
-          }
-          if(this.lastCrankRevolutions > crankRevolutions) {
-            this.lastCrankRevolutions = this.lastCrankRevolutions - 65536;
-          }
+            if(this.lastCrankTime > crankTime) {
+                this.lastCrankTime = this.lastCrankTime - 65536;
+            }
+            if(this.lastCrankRevolutions > crankRevolutions) {
+                this.lastCrankRevolutions = this.lastCrankRevolutions - 65536;
+            }
 
-          let revs = crankRevolutions - this.lastCrankRevolutions;
-          let duration = (crankTime - this.lastCrankTime) / 1024;
-          let rpm = 0;
-          if(duration > 0) {
-            rpm = (revs / duration) * 60;
-          }
+            let revs = crankRevolutions - this.lastCrankRevolutions;
+            let duration = (crankTime - this.lastCrankTime) / 1024;
+            let rpm = 0;
+            if(duration > 0) {
+                rpm = (revs / duration) * 60;
+            }
 
-          this.lastCrankRevolutions = crankRevolutions;
-          this.lastCrankTime = crankTime;
+            this.lastCrankRevolutions = crankRevolutions;
+            this.lastCrankTime = crankTime;
 
-          this.dispatch('cadence', rpm);
-          this.clearValueOnTimeout('cadence');
+            this.dispatch('cadence', rpm);
         }
+
+        if(wheelRevolutions !== undefined && wheelTime !== undefined) {
+            if(this.lastWheelTime > wheelTime) {
+                this.lastWheelTime = this.lastWheelTime - 65536;
+            }
+            if(this.lastWheelRevolutions > wheelRevolutions) {
+                this.lastWheelRevolutions = this.lastWheelRevolutions - 65536;
+            }
+    
+            let wheelRevs = wheelRevolutions - this.lastWheelRevolutions;
+            let wheelDuration = (wheelTime - this.lastWheelTime) / 1024;
+            let wheelRpm = 0;
+            if(wheelDuration > 0) {
+                wheelRpm = (wheelRevs / wheelDuration) * 60;
+            }
+    
+            this.lastWheelRevolutions = wheelRevolutions;
+            this.lastWheelTime = wheelTime;
+
+            this.dispatch('wheelrpm', wheelRpm);
+        }
+
+        this.clearValueOnTimeout(['cadence', 'wheelrpm']);
       });
       this.characteristic.startNotifications();
       this.listening = true;
@@ -463,9 +518,9 @@ export class BleHRMeter extends BleMeter {
 
 }
 
-export class VirtualPowerMeter {
+export class VirtualPowerMeter extends Meter {
   constructor () {
-    this.listeners = {};
+    super();
     this.listening = false;
     this.watts = 0;
 
@@ -490,25 +545,57 @@ export class VirtualPowerMeter {
     }
   }
 
-  addListener(type, callback) {
-    if(!(type in this.listeners)) {
-      this.listeners[type] = [];
-    }
-
-    this.listeners[type].push(callback);
-  }
-
-  dispatch(type, value) {
-    if(!(type in this.listeners)) {
-      this.listeners[type] = [];
-    }
-
-    for(let l of this.listeners[type]) {
-      l(value);
-    }
-  }
-
 }
+
+export class CycleopsMagnetoPowerCurve extends Meter {
+    constructor () {
+        super();
+        this.listening = false;
+  
+        this.id = 'cycleopsmagnetopowercurve';
+        this.name = 'Cycleops Magneto Power Curve';
+    }
+  
+    listen(opts) {
+      if(!this.listening) {
+        let cadenceMeter = opts.cadenceMeter;
+        if(cadenceMeter !== undefined) {
+            cadenceMeter.addListener('wheelrpm', (wheelrpm) => {
+                // Hardcoded to 28mm tires
+                let wheelCircumference = 2136;
+                let kph = (wheelCircumference * wheelrpm * 60) / 1000000;
+                let watts = this.Exponential_DoubleAsymptoticExponentialB_model(kph);
+                if(watts < 0) {
+                    watts = 0;
+                }
+                this.dispatch('power', watts);
+                this.clearValueOnTimeout('power');
+            });
+
+            this.listening = true;
+        }
+      }
+    }
+  
+    // Derived from data found here:
+    //    https://machiine.com/2018/how-accurate-is-zwifts-power-estimate-for-classic-trainers/
+    // Curve fitting utilizing:
+    //    http://zunzun.com/
+    Exponential_DoubleAsymptoticExponentialB_model(x_in) {
+        let temp;
+        temp = 0.0;
+
+        // coefficients
+        let a = -4.2557472799016870E+02;
+        let b = 1.6719781580876170E-02;
+        let c = -7.3525587442334214E+01;
+        let d = -1.3986922573862917E-01;
+
+        temp = a * (1.0 - Math.exp(b * x_in)) + c * (1.0 - Math.exp(d * x_in));
+        return temp;
+    }
+  
+  }
 
 export class AntMeter extends Meter {
   constructor (type, manId, modelNum, deviceId) {
@@ -542,7 +629,6 @@ export class AntMeter extends Meter {
 export class AntPowerMeter extends AntMeter {
   constructor (id, type, manId, modelNum, deviceId) {
     super(type, manId, modelNum, deviceId);
-    this.timeoutID = undefined;
 
     this.id = id;
   }
@@ -559,9 +645,11 @@ export class AntPowerMeter extends AntMeter {
 export class AntCadenceMeter extends AntMeter  {
   constructor (id, type, manId, modelNum, deviceId) {
     super(type, manId, modelNum, deviceId);
-    this.timeoutID = undefined;
 
     this.id = id;
+
+    this.lastWheelRevolutions = 0;
+    this.lastWheelTime = 0;
   }
 
   antMessage(message) {
@@ -574,15 +662,38 @@ export class AntCadenceMeter extends AntMeter  {
     }
     if(cadence !== undefined) {
       this.dispatch('cadence', cadence);
-      this.clearValueOnTimeout('cadence');
     }
+
+    let wheelTime = message.SpeedEventTime;
+    let wheelRevolutions = message.CumulativeSpeedRevolutionCount;
+    if(wheelRevolutions !== undefined && wheelTime !== undefined && this.lastWheelTime !== wheelTime) {
+        if(this.lastWheelTime > wheelTime) {
+            this.lastWheelTime = this.lastWheelTime - 65536;
+        }
+        if(this.lastWheelRevolutions > wheelRevolutions) {
+            this.lastWheelRevolutions = this.lastWheelRevolutions - 65536;
+        }
+
+        let wheelRevs = wheelRevolutions - this.lastWheelRevolutions;
+        let wheelDuration = (wheelTime - this.lastWheelTime) / 1024;
+        let wheelRpm = 0;
+        if(wheelDuration > 0) {
+            wheelRpm = (wheelRevs / wheelDuration) * 60;
+        }
+
+        this.lastWheelRevolutions = wheelRevolutions;
+        this.lastWheelTime = wheelTime;
+
+        this.dispatch('wheelrpm', wheelRpm);
+    }
+
+    this.clearValueOnTimeout(['cadence', 'wheelrpm']);
   }
 }
 
 export class AntHRMeter extends AntMeter {
   constructor (id, type, manId, modelNum, deviceId) {
     super(type, manId, modelNum, deviceId);
-    this.timeoutID = undefined;
 
     this.id = id;
   }
