@@ -211,7 +211,7 @@ export function registerUI() {
       self += "?useant=true"
     }
 
-    window.location.assign("https://www.strava.com/oauth/authorize?client_id=" + credentials.STRAVA_CLIENT_ID + "&response_type=code&redirect_uri="+encodeURIComponent(self)+"&scope=write&state=strava");
+    window.location.assign("https://www.strava.com/oauth/authorize?client_id=" + credentials.STRAVA_CLIENT_ID + "&response_type=code&redirect_uri="+encodeURIComponent(self)+"&scope=activity%3Awrite&state=strava");
   };
 
   /**
