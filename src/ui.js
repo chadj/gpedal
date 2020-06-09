@@ -4,7 +4,7 @@ import {fileRead, readCharacteristicValue} from './lib/utils';
 import {credentials} from "./lib/oauth";
 import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
     BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser, AntMeterLocator,
-    CycleopsMagnetoPowerCurve} from './Meter';
+    CycleopsMagnetoPowerCurve, BHBladeZBikeMeter} from './Meter';
 import {managedLocalStorage} from './lib/managedLocalStorage';
 import URLSearchParams from 'url-search-params';
 import fscreen from 'fscreen';
@@ -20,13 +20,17 @@ export function registerUI() {
     let path = window.location.pathname;
     if(params.get('useant') === 'true') {
       path += "?useant=true"
+    } else if(params.get('useserial') === 'true') {
+      path += "?useserial=true"
     }
     window.location.assign(path);
     return;
   }
 
   let proto = window.location.protocol;
-  let isBle = !(params.get('useant') === 'true');
+  let isAnt = (params.get('useant') === 'true');
+  let isSerial = (params.get('useserial') === 'true');
+  let isBle = (!isAnt && !isSerial);
 
   if(credentials.STRAVA_CLIENT_ID === undefined || credentials.STRAVA_CLIENT_ID === null || credentials.STRAVA_CLIENT_ID === '') {
     document.getElementById('container-strava').style.display = 'none';
@@ -74,9 +78,11 @@ export function registerUI() {
   let $btn = document.getElementById('begin-session');
   let $btntxt = document.getElementById('btn-bluetooth-device-txt');
   let $atntxt = document.getElementById('btn-ant-device-txt');
+  let $stntxt = document.getElementById('btn-serial-device-txt');
   let $stva = document.getElementById('strava-btn-connect');
   let $blt = document.getElementById('btn-bluetooth-device');
   let $alt = document.getElementById('btn-ant-device');
+  let $slt = document.getElementById('btn-serial-device');
   let $pm = document.getElementById('power-meter');
   let $hm = document.getElementById('hr-meter');
   let $cm = document.getElementById('cadence-meter');
@@ -84,6 +90,7 @@ export function registerUI() {
   let $fsc = document.getElementById('btn-fullscreen');
   let $blecontainer = document.getElementById('bluetooth-device-container');
   let $antcontainer = document.getElementById('ant-device-container');
+  let $serialcontainer = document.getElementById('serial-device-container');
   let $antwsurl = document.getElementById('ant-ws-url');
 
   let redrawMeters = device => {
@@ -209,6 +216,8 @@ export function registerUI() {
     let self = proto + '//' + host + window.location.pathname;
     if(params.get('useant') === 'true') {
       self += "?useant=true"
+    } else if(params.get('useserial') === 'true') {
+      self += "?useserial=true"
     }
 
     window.location.assign("https://www.strava.com/oauth/authorize?client_id=" + credentials.STRAVA_CLIENT_ID + "&response_type=code&redirect_uri="+encodeURIComponent(self)+"&scope=activity%3Awrite&state=strava");
@@ -388,6 +397,43 @@ export function registerUI() {
   };
 
   /**
+  Serial Button Handler
+  */
+ $slt.onclick = (e) => {
+    e.preventDefault();
+
+    if(!$slt.classList.contains('disabled')) {
+      $slt.classList.add('disabled');
+    } else {
+      return;
+    }
+
+    $stntxt.innerHTML = "Connecting ...";
+    let $serialerr = document.getElementById('btn-serial-device-error');
+    $serialerr.style.display = 'none';
+    (async function() {
+      let port = await navigator.serial.requestPort();
+      await port.open({ baudrate: 9600 });
+
+      let meter = new BHBladeZBikeMeter(port);
+      powerMeters.push([meter.id, meter]);
+      cadenceMeters.push([meter.id, meter]);
+      redrawMeters(meter);
+
+      $slt.classList.remove('disabled');
+      $stntxt.innerHTML = "Connect";
+    })()
+    .catch(error => {
+      $slt.classList.remove('disabled');
+      $stntxt.innerHTML = "Connect";
+      console.log("Error: ", error);
+
+      $serialerr.innerHTML = '<br/> ' + error;
+      $serialerr.style.display = 'inline';
+    });
+  };
+
+  /**
   Begin Button Handler
   */
   $btn.onclick = (e) => {
@@ -482,8 +528,21 @@ export function registerUI() {
     $antwsurl.value = localStorage.getItem('ant-ws-url');
   }
 
-  if(!isBle) {
+  if(isAnt) {
     $blecontainer.style.display = 'none';
     $antcontainer.style.display = 'block';
+    $serialcontainer.style.display = 'none';
+  }
+
+  if(isSerial) {
+    $blecontainer.style.display = 'none';
+    $antcontainer.style.display = 'none';
+    $serialcontainer.style.display = 'block';
+  }
+
+  if ('serial' in navigator) {
+    for(let $l of document.querySelectorAll('.serial-switch-link')) {
+      $l.style.display = 'block';
+    }
   }
 }

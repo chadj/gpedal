@@ -1,3 +1,4 @@
+import {timeout} from './lib/utils';
 import faye from 'faye';
 
 let ble_sint16 = ['getInt16', 2, true];
@@ -801,4 +802,200 @@ export class AntMeterLocator {
       }
     });
   }
+}
+
+//
+//  Meter for BH Fitness BladeZ Indoor Cycling bikes that support a Class Bluetooth wireless connection.  These
+//  bikes use the Serial Port Profile of the classic bluetooth spec. that be read and written to via the Web
+//  Serial API ( https://codelabs.developers.google.com/codelabs/web-serial/ ) and
+//  ( https://wicg.github.io/serial/ ).  This code has only been tested with a BladeZ r500i.
+//
+export class BHBladeZBikeMeter extends Meter {
+    constructor (port) {
+        super();
+    
+        this.port = port;
+        this.name = 'BH BladeZ Bike Meter';
+        this.id = 'BHBladeZBikeMeter';
+        this.listening = false;
+
+        this.inputStream = this.port.readable;
+        this.reader = this.inputStream.getReader();
+
+        this.outputStream = this.port.writable;
+
+        this.initCommandsRaw = [ [ 85, 12, 1, -1 ], [ 85, -69, 1, -1 ], [ 85, 36, 1, -1 ], [ 85, 37, 1, -1 ], [ 85, 38, 1, -1 ], [ 85, 39, 1, -1 ], [ 85, 2, 1, -1 ], [ 85, 3, 1, -1 ], [ 85, 4, 1, -1 ], [ 85, 6, 1, -1 ], [ 85, 31, 1, -1 ], [ 85, -96, 1, -1 ], [ 85, -80, 1, -1 ], [ 85, -78, 1, -1 ], [ 85, -77, 1, -1 ], [ 85, -76, 1, -1 ], [ 85, -75, 1, -1 ], [ 85, -74, 1, -1 ], [ 85, -73, 1, -1 ], [ 85, -72, 1, -1 ], [ 85, -71, 1, -1 ], [ 85, -70, 1, -1 ], [ 85, 11, 1, -1 ], [ 85, 24, 1, -1 ], [ 85, 25, 1, -1 ], [ 85, 26, 1, -1 ], [ 85, 27, 1, -1 ] ];
+        this.initCommands = [];
+
+        this.keepAliveCommandRaw = [ 85, 23, 1, 1 ];
+        this.keepAliveCommand = new Int8Array(this.keepAliveCommandRaw.length);
+
+        this.startCommandRaw = [ 85, 10, 1, 1 ];
+        this.startCommand = new Int8Array(this.startCommandRaw.length);
+
+        this.setinclineCommandRaw = [ 85, 17, 1, 15 ];
+        this.setinclineCommand = new Int8Array(this.setinclineCommandRaw.length);
+
+        this.resetCommandRaw = [ 85, 10, 1, 2 ];
+        this.resetCommand = new Int8Array(this.resetCommandRaw.length);
+
+        this.setUserDataCommandRaw = [ 85, 1, 6, 35, 0, 250, 0, 74, 0];
+        this.setUserDataCommand = new Int8Array(this.setUserDataCommandRaw.length);
+
+        this.setActionModeCommandRaw = [ 85, 21, 1, 0 ];
+        this.setActionModeCommand = new Int8Array(this.setActionModeCommandRaw.length);
+
+        this.queryPulseTypeCommandRaw = [ 85, 7, 1, -1 ];
+        this.queryPulseTypeCommand = new Int8Array(this.queryPulseTypeCommandRaw.length);
+    }
+
+    listen() {
+        if(!this.listening) {
+            this.listening = true;
+            this.initializeDevice().catch(console.error);
+        }
+    }
+
+    async initializeDevice() {
+        this.initializeCommands();
+
+        this.readLoop().catch(console.error);
+
+        for(let c of this.initCommands) {
+            await this.writeToStream(c);
+        }
+    
+        await timeout(1000);
+    
+        await this.writeToStream(this.keepAliveCommand);
+    
+        await timeout(5000);
+    
+        await this.writeToStream(this.resetCommand);
+    
+        await timeout(500);
+    
+        await this.writeToStream(this.setUserDataCommand);
+    
+        await timeout(500);
+    
+        await this.writeToStream(this.setActionModeCommand);
+    
+        await timeout(500);
+    
+        await this.writeToStream(this.setinclineCommand);
+    
+        await timeout(500);
+    
+        await this.writeToStream(this.startCommand);
+    
+        await timeout(500);
+    
+        await this.writeToStream(this.queryPulseTypeCommand);
+    
+        await timeout(1000);
+    
+        this.maintainKeepAlive().catch(console.error);
+    }
+
+    initializeCommands() {
+        for(let commandRaw of this.initCommandsRaw) {
+            let command = new Int8Array(commandRaw.length);
+            commandRaw.forEach((b,i) => {
+                command[i] = b;
+            });
+            this.initCommands.push(command);
+        }
+        this.initCommandsRaw = null;
+        
+        this.keepAliveCommandRaw.forEach((b,i) => {
+            this.keepAliveCommand[i] = b;
+        });
+        this.keepAliveCommandRaw = null;
+
+        this.startCommandRaw.forEach((b,i) => {
+            this.startCommand[i] = b;
+        });
+        this.startCommandRaw = null;
+
+        this.setinclineCommandRaw.forEach((b,i) => {
+            this.setinclineCommand[i] = b;
+        });
+        this.setinclineCommandRaw = null;
+
+        this.resetCommandRaw.forEach((b,i) => {
+            this.resetCommand[i] = b;
+        });
+        this.resetCommandRaw = null;
+
+        this.setUserDataCommandRaw.forEach((b,i) => {
+            this.setUserDataCommand[i] = b;
+        });
+        this.setUserDataCommandRaw = null;
+
+        this.setActionModeCommandRaw.forEach((b,i) => {
+            this.setActionModeCommand[i] = b;
+        });
+        this.setActionModeCommandRaw = null;
+
+        this.queryPulseTypeCommandRaw.forEach((b,i) => {
+            this.queryPulseTypeCommand[i] = b;
+        });
+        this.queryPulseTypeCommandRaw = null;
+    }
+
+    async writeToStream(...chunks) {
+        const writer = this.outputStream.getWriter();
+        for(let chunk of chunks) {
+          await writer.write(chunk);
+        }
+        writer.releaseLock();
+    }
+    
+    async maintainKeepAlive() {
+        while (true) {
+            await timeout(5000);
+            await this.writeToStream(this.keepAliveCommand);
+        }
+    }
+
+    async readLoop() {
+        while (true) {
+            const { value, done } = await this.reader.read();
+            if (value) {
+                let length = value.length;
+                let str = "";
+                for(let v of value) {
+                    v = v.toString(16);
+                    if(v.length === 1) {
+                        v = "0"+v;
+                    }
+                    str = str + v;
+                }
+    
+                let position = str.indexOf('550d');
+                if(position !== -1) {
+                    let offset = position/2;
+                    if(length >= offset + 16) {
+                        offset += 3;
+                        let ab = value.buffer.slice(offset);
+                        const vals8 = new Int8Array(ab);
+                        const level = vals8[8];
+                        const rpm = vals8[10] & 0xFF;
+                        const cal = (new DataView(ab.slice(4,6))).getInt16(0, false);
+                        const time = (new DataView(ab.slice(0,2))).getInt16(0, false);
+                        const watts = (new DataView(ab.slice(11,13))).getInt16(0, false);
+    
+                        this.dispatch('power', watts);
+                        this.dispatch('cadence', rpm);
+                        this.clearValueOnTimeout(['power', 'cadence']);
+                    }
+                }
+            }
+            if (done) {
+                this.reader.releaseLock();
+                break;
+            }
+        }
+    }
 }

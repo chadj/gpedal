@@ -691,12 +691,12 @@
                                   </a>
                                   <p id="btn-bluetooth-device-warning" class="small" style="display: none">
                                       Web Bluetooth API not supported in this browser.  Please use Chrome on Mac OS, Linux or Android.<br /><br />
-                                      On Windows use Chrome with the <a href="https://github.com/urish/web-bluetooth-polyfill" target="_blank">Windows 10 Web Bluetooth Polyfill</a> installed.<br /><br />
                                       On iPhone or iPad use the <a href="https://itunes.apple.com/us/app/webble/id1193531073">WebBLE Browser</a> available from the App Store.
                                   </p>
                                   <br/>
                                   <span class="small">
-                                      <a href=".?useant=true">Switch to Ant+ Sensors</a>
+                                      <a href=".?useant=true">Switch to Ant+ Sensors</a><br />
+                                      <a href=".?useserial=true" class="serial-switch-link" style="display:none">Switch to Serial Sensors</a>
                                   </span>
                             </div>
                             <div id="ant-device-container" class="form-group col-md-9" style="display: none">
@@ -712,7 +712,24 @@
                                   <br/>
                                   <span id="btn-ant-device-warning" class="small" style="">
                                       Download and run the <a href="https://github.com/chadj/ant-ws" target="_blank">ANT-WS</a> server locally to relay ANT+ messages over websockets<br/>
-                                      <a href=".">Switch to BLE Sensors</a>
+                                      <a href=".">Switch to BLE Sensors</a><br />
+                                      <a href=".?useserial=true" class="serial-switch-link" style="display:none">Switch to Serial Sensors</a>
+                                  </span>
+                            </div>
+                            <div id="serial-device-container" class="form-group col-md-9" style="display: none">
+                                <label for="btn-serial-device" class="col-form-label">Web Serial Devices</label>
+                                  <br/>
+                                  <a id="btn-serial-device" class="btn btn-warning" href="#" role="button">
+                                    <i class="fa fa-wifi" aria-hidden="true"></i>
+                                    <span id="btn-serial-device-txt">Connect</span>
+                                  </a>
+                                  <span id="btn-serial-device-error" class="small" style="color: red; display:none">
+                                  </span>
+                                  <br/>
+                                  <span id="btn-serial-device-warning" class="small" style="">
+                                      Currently only BH Fitness BladeZ bikes are supported.<br/>
+                                      <a href=".">Switch to BLE Sensors</a><br />
+                                      <a href=".?useant=true">Switch to Ant+ Sensors</a>
                                   </span>
                             </div>
                         </div>
