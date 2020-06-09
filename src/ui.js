@@ -6,7 +6,7 @@ import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
     BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser, AntMeterLocator,
     CycleopsMagnetoPowerCurve, BHBladeZBikeMeter} from './Meter';
 import {managedLocalStorage} from './lib/managedLocalStorage';
-import URLSearchParams from 'url-search-params';
+import URLSearchParams from '@ungap/url-search-params';
 import fscreen from 'fscreen';
 
 
