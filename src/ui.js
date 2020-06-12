@@ -39,6 +39,7 @@ export function registerUI() {
   if(localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID)) {
     document.getElementById('strava-btn-connect').style.display = 'none';
     document.getElementById('strava-btn-connected').style.display = 'block';
+    document.getElementById('strava-clear').style.display = 'block';
   }
 
   let routes = managedLocalStorage.container('route-progress');
@@ -80,6 +81,7 @@ export function registerUI() {
   let $atntxt = document.getElementById('btn-ant-device-txt');
   let $stntxt = document.getElementById('btn-serial-device-txt');
   let $stva = document.getElementById('strava-btn-connect');
+  let $stvaclr = document.getElementById('strava-btn-clear');
   let $blt = document.getElementById('btn-bluetooth-device');
   let $alt = document.getElementById('btn-ant-device');
   let $slt = document.getElementById('btn-serial-device');
@@ -221,6 +223,19 @@ export function registerUI() {
     }
 
     window.location.assign("https://www.strava.com/oauth/authorize?client_id=" + credentials.STRAVA_CLIENT_ID + "&response_type=code&redirect_uri="+encodeURIComponent(self)+"&scope=activity%3Awrite&state=strava");
+  };
+
+  
+    /**
+  Strava Clear Handler
+  */
+ $stvaclr.onclick = (e) => {
+    e.preventDefault();
+
+    localStorage.setItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID, undefined);
+    document.getElementById('strava-btn-connect').style.display = 'block';
+    document.getElementById('strava-btn-connected').style.display = 'none';
+    document.getElementById('strava-clear').style.display = 'none';
   };
 
   /**
