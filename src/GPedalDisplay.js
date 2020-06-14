@@ -643,7 +643,8 @@ export class GPedalDisplay {
   showFinalizeUI(msg) {
     document.getElementById('ui-finalize-container').style.display = 'block';
     document.getElementById('ui-finalize-label').innerHTML = msg;
-    if(localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID)) {
+    let strvaOauthCodeTest = localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID);
+    if(strvaOauthCodeTest !== undefined && strvaOauthCodeTest !== null && strvaOauthCodeTest !== '' && strvaOauthCodeTest !== 'undefined' && strvaOauthCodeTest !== 'null') {
       let now = new Date();
       let ride_name = "GPedal - ";
       if(this.routeName) {

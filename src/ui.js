@@ -25,6 +25,10 @@ export function registerUI() {
     }
     window.location.assign(path);
     return;
+  } else if(params.get('state') && params.get('error')) {
+    let $strvaerror = document.getElementById('strava-error-message');
+    $strvaerror.innerHTML = "Strava Connect Error: " + params.get('error')
+    $strvaerror.style.display = 'block';
   }
 
   let proto = window.location.protocol;
@@ -36,7 +40,8 @@ export function registerUI() {
     document.getElementById('container-strava').style.display = 'none';
   }
 
-  if(localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID)) {
+  let strvaOauthCodeTest = localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID);
+  if(strvaOauthCodeTest !== undefined && strvaOauthCodeTest !== null && strvaOauthCodeTest !== '' && strvaOauthCodeTest !== 'undefined' && strvaOauthCodeTest !== 'null') {
     document.getElementById('strava-btn-connect').style.display = 'none';
     document.getElementById('strava-btn-connected').style.display = 'block';
     document.getElementById('strava-clear').style.display = 'block';
@@ -232,7 +237,7 @@ export function registerUI() {
  $stvaclr.onclick = (e) => {
     e.preventDefault();
 
-    localStorage.setItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID, undefined);
+    localStorage.removeItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID);
     document.getElementById('strava-btn-connect').style.display = 'block';
     document.getElementById('strava-btn-connected').style.display = 'none';
     document.getElementById('strava-clear').style.display = 'none';
