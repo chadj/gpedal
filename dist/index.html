@@ -510,6 +510,11 @@
           font-weight: bold;
           color: #f00;
       }
+      
+      #strva-post-error {
+          font-weight: bold;
+          color: #f00;
+      }
 
       html, body {
         height: 100%;
@@ -616,6 +621,7 @@
                     Ride Finished
                 </div>
                 <div id="ui-finalize-actions">
+                    <span id="strva-post-error" style="display: none"></span>
                     <input id="input-ride-name" class="form-control" type="text" style="display: none" placeholder="Name Ride">
                     <a href="#" id="btn-export-strava" class="btn btn-secondary active" role="button" aria-pressed="true" style="display: none">Export to Strava</a>
                     <a href="#" id="btn-fullscreen" class="btn btn-secondary active" role="button" aria-pressed="true" style="display: block">Go Fullscreen</a>
@@ -831,6 +837,6 @@
     </gpx>
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8CBYhq7f2aibteBvLz2jvRZAHu346qJM&libraries=geometry"></script>
-    <script src="bundle.js?v=d6cc1ba"></script>
+    <script src="bundle.js?v=100129c"></script>
   </body>
 </html>

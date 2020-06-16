@@ -1,5 +1,5 @@
 import {registerUI} from './ui';
 
 document.addEventListener('DOMContentLoaded', () => {
-  registerUI();
+  registerUI().catch(console.error);
 });

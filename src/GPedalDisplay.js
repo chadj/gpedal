@@ -1,5 +1,7 @@
 import {geocode, getPanoramaByLocation} from './lib/gmapPromises';
-import {timeout, dateFormat} from './lib/utils';
+import {timeout, dateFormat, hasStravaOauthTokens,
+    getStravaOauthTokens, setStravaOauthTokens,
+    removeStravaOauthTokens} from './lib/utils';
 import {CalculateRho} from './lib/air_density';
 import {CalculateVelocity} from './lib/power_v_speed';
 import Mustache from 'mustache';
@@ -573,8 +575,6 @@ export class GPedalDisplay {
     }
 
     $stva.innerHTML = "Exporting";
-    this.routeCompleted = true;
-
     let $name = document.getElementById('input-ride-name');
     let name = $name.value;
 
@@ -597,30 +597,55 @@ export class GPedalDisplay {
       points: points
     });
 
+    let stravaOauth = getStravaOauthTokens();
     let tokenForm = new FormData();
     tokenForm.set('client_id', credentials.STRAVA_CLIENT_ID);
     tokenForm.set('client_secret', credentials.STRAVA_CLIENT_SECRET);
-    tokenForm.set('code', localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID));
+    tokenForm.set('refresh_token', stravaOauth.refresh_token);
+    tokenForm.set('grant_type', 'refresh_token');
     let token_response = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       body: tokenForm
     });
+    if(!token_response.ok) {
+        let err = await token_response.json();
+        let msg = err.message;
+        let reason = JSON.stringify(err.errors);
+        let $strvape = document.getElementById('strva-post-error');
+        $strvape.innerHTML = `<p>An error occurred while authorizing with Strava</p><p>${msg} - ${reason}</p><br /><br />`;
+        $strvape.style.display = 'block';
+        $name.style.display = 'none';
+        return;
+    }
     let token_body = await token_response.json();
-    let access_token = token_body.access_token;
+    stravaOauth.access_token = token_body.access_token;
+    stravaOauth.refresh_token = token_body.refresh_token;
+    setStravaOauthTokens(stravaOauth);
 
     let gpxFile = new File([gpxBody], "import_to_strava.gpx", {type : 'text/xml'});
     let form = new FormData();
     form.set('activity_type', 'virtualride');
+    form.set('trainer', 'true');
     form.set('name', name);
     form.set('data_type', 'gpx');
     form.set('file', gpxFile);
     let headers = new Headers();
-    headers.set('Authorization', 'Bearer ' + access_token);
+    headers.set('Authorization', 'Bearer ' + stravaOauth.access_token);
     let response = await fetch('https://www.strava.com/api/v3/uploads', {
       method: 'POST',
       headers: headers,
       body: form
     });
+    if(!response.ok) {
+        let err = await response.json();
+        let msg = err.message;
+        let reason = JSON.stringify(err.errors);
+        let $strvape = document.getElementById('strva-post-error');
+        $strvape.innerHTML = `<p>An error occurred while uploading to Strava</p><p>${msg} - ${reason}</p><br /><br />`;
+        $strvape.style.display = 'block';
+        $name.style.display = 'none';
+        return;
+    }
     let body = await response.json();
     let req_id = body.id;
 
@@ -628,6 +653,16 @@ export class GPedalDisplay {
       let status_response = await fetch('https://www.strava.com/api/v3/uploads/' + req_id, {
         headers: headers
       });
+      if(!status_response.ok) {
+        let err = await status_response.json();
+        let msg = err.message;
+        let reason = JSON.stringify(err.errors);
+        let $strvape = document.getElementById('strva-post-error');
+        $strvape.innerHTML = `<p>An error occurred while waiting on upload to Strava</p><p>${msg} - ${reason}</p><br /><br />`;
+        $strvape.style.display = 'block';
+        $name.style.display = 'none';
+        return;
+      }
       let status_body = await status_response.json();
       if(status_body.activity_id) {
         break;
@@ -636,6 +671,7 @@ export class GPedalDisplay {
       await timeout(4000);
     }
 
+    this.routeCompleted = true;
     managedLocalStorage.remove('route-progress', this.cacheName());
     $stva.innerHTML = "Done!";
   }
@@ -643,8 +679,7 @@ export class GPedalDisplay {
   showFinalizeUI(msg) {
     document.getElementById('ui-finalize-container').style.display = 'block';
     document.getElementById('ui-finalize-label').innerHTML = msg;
-    let strvaOauthCodeTest = localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID);
-    if(strvaOauthCodeTest !== undefined && strvaOauthCodeTest !== null && strvaOauthCodeTest !== '' && strvaOauthCodeTest !== 'undefined' && strvaOauthCodeTest !== 'null') {
+    if(hasStravaOauthTokens()) {
       let now = new Date();
       let ride_name = "GPedal - ";
       if(this.routeName) {

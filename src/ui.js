@@ -1,6 +1,8 @@
 import {GPedalDisplay} from './GPedalDisplay';
 import {GPXRoutePointFactory} from './Route';
-import {fileRead, readCharacteristicValue} from './lib/utils';
+import {fileRead, readCharacteristicValue, hasStravaOauthTokens,
+    getStravaOauthTokens, setStravaOauthTokens,
+    removeStravaOauthTokens} from './lib/utils';
 import {credentials} from "./lib/oauth";
 import {VirtualPowerMeter, BlePowerCadenceMeter, BleCadenceMeter,
     BlePowerMeter, BleHRMeter, CyclingPowerMeasurementParser, AntMeterLocator,
@@ -10,21 +12,42 @@ import URLSearchParams from '@ungap/url-search-params';
 import fscreen from 'fscreen';
 
 
-export function registerUI() {
+export async function registerUI() {
   let thisLocationURL = new URL(window.location);
   let params = new URLSearchParams(thisLocationURL.search);
   if(params.get('state') && params.get('code')) {
-    let code = params.get('code');
-    localStorage.setItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID, code);
-
-    let path = window.location.pathname;
-    if(params.get('useant') === 'true') {
-      path += "?useant=true"
-    } else if(params.get('useserial') === 'true') {
-      path += "?useserial=true"
+    let stravaOauth = getStravaOauthTokens();
+    let tokenForm = new FormData();
+    tokenForm.set('client_id', credentials.STRAVA_CLIENT_ID);
+    tokenForm.set('client_secret', credentials.STRAVA_CLIENT_SECRET);
+    tokenForm.set('code', params.get('code'));
+    tokenForm.set('grant_type', 'authorization_code');
+    let token_response = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      body: tokenForm
+    });
+    if(!token_response.ok) {
+        let err = await token_response.json();
+        let msg = err.message;
+        let reason = JSON.stringify(err.errors);
+        let $strvaerror = document.getElementById('strava-error-message');
+        $strvaerror.innerHTML = `Strava Connect Error: ${msg} - ${reason}`;
+        $strvaerror.style.display = 'block';
+    } else {
+        let token_body = await token_response.json();
+        stravaOauth.access_token = token_body.access_token;
+        stravaOauth.refresh_token = token_body.refresh_token
+        setStravaOauthTokens(stravaOauth);
+    
+        let path = window.location.pathname;
+        if(params.get('useant') === 'true') {
+          path += "?useant=true"
+        } else if(params.get('useserial') === 'true') {
+          path += "?useserial=true"
+        }
+        window.location.assign(path);
+        return;
     }
-    window.location.assign(path);
-    return;
   } else if(params.get('state') && params.get('error')) {
     let $strvaerror = document.getElementById('strava-error-message');
     $strvaerror.innerHTML = "Strava Connect Error: " + params.get('error')
@@ -40,8 +63,7 @@ export function registerUI() {
     document.getElementById('container-strava').style.display = 'none';
   }
 
-  let strvaOauthCodeTest = localStorage.getItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID);
-  if(strvaOauthCodeTest !== undefined && strvaOauthCodeTest !== null && strvaOauthCodeTest !== '' && strvaOauthCodeTest !== 'undefined' && strvaOauthCodeTest !== 'null') {
+  if(hasStravaOauthTokens()) {
     document.getElementById('strava-btn-connect').style.display = 'none';
     document.getElementById('strava-btn-connected').style.display = 'block';
     document.getElementById('strava-clear').style.display = 'block';
@@ -237,7 +259,7 @@ export function registerUI() {
  $stvaclr.onclick = (e) => {
     e.preventDefault();
 
-    localStorage.removeItem('strava-oauth-code-' + credentials.STRAVA_CLIENT_ID);
+    removeStravaOauthTokens();
     document.getElementById('strava-btn-connect').style.display = 'block';
     document.getElementById('strava-btn-connected').style.display = 'none';
     document.getElementById('strava-clear').style.display = 'none';
