@@ -625,7 +625,6 @@ export class GPedalDisplay {
     let gpxFile = new File([gpxBody], "import_to_strava.gpx", {type : 'text/xml'});
     let form = new FormData();
     form.set('activity_type', 'virtualride');
-    form.set('trainer', 'true');
     form.set('name', name);
     form.set('data_type', 'gpx');
     form.set('file', gpxFile);
