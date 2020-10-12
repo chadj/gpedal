@@ -455,7 +455,7 @@ export async function registerUI() {
     $serialerr.style.display = 'none';
     (async function() {
       let port = await navigator.serial.requestPort();
-      await port.open({ baudrate: 9600 });
+      await port.open({ baudRate: 9600 });
 
       let meter = new BHBladeZBikeMeter(port);
       powerMeters.push([meter.id, meter]);
