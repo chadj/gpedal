@@ -338,7 +338,7 @@ export class GPedalDisplay {
         let velocity = this.speedFromPower(this.ridingState.watts, this.ridingState.point.smoothedGrade,
           this.ridingState.point.elevation);
         let smoothed_velocity = this.ridingState.speed + ((velocity - this.ridingState.speed) * 0.2);
-        if(smoothed_velocity < 0.447) {
+        if(this.ridingState.watts < 50 && smoothed_velocity < 0.447) {
           smoothed_velocity = 0;
         }
         let can_travel = smoothed_velocity * duration * capacity_remaining;
@@ -505,7 +505,7 @@ export class GPedalDisplay {
       }
 
       let distance = (this.ridingState.distance * (this.unit === 'imperial' ? 0.000621371 : 0.001));
-      if(distance > 100) {
+      if(distance >= 100) {
         distance = distance.toFixed();
       } else {
         distance = distance.toFixed(1);
